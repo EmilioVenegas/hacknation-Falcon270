@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+crewai
+crewai_tools
+langgraph
+litellm
+rdkit
+pydantic
+python-dotenv
+langchain-google-genai
