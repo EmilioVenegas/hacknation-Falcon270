@@ -8,6 +8,7 @@ interface AgentMessageProps {
     agent: string;
     message: string;
     timestamp?: number;
+    proposed_smiles?: string;
   };
 }
 

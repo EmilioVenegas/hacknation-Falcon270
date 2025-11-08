@@ -9,14 +9,17 @@ export interface AgentThought {
   agent: string;
   message: string;
   timestamp?: number;
+  proposed_smiles?: string;
 }
 
 export interface FinalReportData {
   type: "final_report";
   data: {
-    executive_summary: string;
+    status: "Success" | "Failure";
     final_smiles: string;
-    verifiable_data: Record<string, any>;
+    validation: Record<string, any>;
+    history: string[];
+    attempts: number;
   };
 }
 
