@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 
+
 interface FinalReportProps {
   report: {
     executive_summary: string;
