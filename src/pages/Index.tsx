@@ -94,6 +94,7 @@ const Index = () => {
                   agent: agent,
                   message: message,
                   timestamp: Date.now(),
+                  proposed_smiles: parsedData.proposed_smiles,
                 } as StreamMessage,
               ]);
             } else if (parsedData.type === "final_report") {
