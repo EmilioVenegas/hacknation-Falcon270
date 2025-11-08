@@ -62,8 +62,12 @@ async def run_crew(request: CrewRequest):
         conversation_history=[],
         final_report={},
         retries=0,
-        max_retries=5  # Hardcode max 5 attempts for the demo
+        max_retries=5,  # Hardcode max 5 attempts for the demo
+        imilarity_failures=0,
+        max_similarity_failures=4
     )
+
+    # In main.py
 
     async def event_stream():
         """The async generator for streaming SSE."""
@@ -77,16 +81,24 @@ async def run_crew(request: CrewRequest):
                 last_node = list(event.keys())[-1]
                 
                 if last_node == "__end__":
-                    # Graph has finished
-                    final_report = event[last_node].get("final_report", {})
-                    sse_data = {
-                        "type": "final_report",
-                        "data": final_report
-                    }
-                    yield f"data: {json.dumps(sse_data)}\n\n"
+                    # Safeguard in case the report wasn't caught
+                    final_report = event[last_node].get("final_report")
+                    if final_report:
+                        sse_data = {"type": "final_report", "data": final_report}
+                        yield f"data: {json.dumps(sse_data)}\n\n"
                     break
 
                 current_state = event[last_node]
+
+                # Check for the final report on *every* event,
+                # not just on "__end__". The "synthesize" node
+                # is the one that creates this.
+                final_report = current_state.get("final_report")
+                if final_report:
+                    # If we have a final report, send it and we are done.
+                    sse_data = {"type": "final_report", "data": final_report}
+                    yield f"data: {json.dumps(sse_data)}\n\n"
+                    break # Stop the stream
                 
                 # Check for new messages in conversation_history
                 history = current_state.get("conversation_history", [])
