@@ -3,14 +3,13 @@ import json
 from typing import TypedDict, List, Dict, Any
 from langgraph.graph import StateGraph, END
 from crewai import Agent, Task, Crew
-from langchain_google_genai import ChatGoogleGenerativeAI
+from crewai.llm import LLM
 from dotenv import load_dotenv
-from litellm import completion
 # --- MODIFIED IMPORTS ---
 # Import all the tools we will need for validation and routing
 from tools import (
-    static_tools, get_is_smiles_string_valid, get_logp, get_similarity, 
-    get_molecular_weight, get_tpsa, get_aromatic_rings, get_h_bond_donors, 
+    static_tools, get_is_smiles_string_valid, get_logp, get_similarity,
+    get_molecular_weight, get_tpsa, get_aromatic_rings, get_h_bond_donors,
     get_h_bond_acceptors, get_rotatable_bonds, get_lipinski_violations
 )
 
@@ -21,21 +20,7 @@ if not GOOGLE_API_KEY:
     raise ValueError("GOOGLE_API_KEY not found in .env file. Please create a .env file and add it.")
 
 # --- Define Model ---
-class GeminiLLMWrapper:
-    def __init__(self, model, api_key):
-        from langchain_google_genai import ChatGoogleGenerativeAI
-        self.llm = ChatGoogleGenerativeAI(model=model, google_api_key=api_key)
-
-    def __call__(self, prompt):
-        result = self.llm.invoke(prompt)
-        # Guard against unexpected output structures
-        if hasattr(result, "content"):
-            return result.content
-        elif hasattr(result, "text"):
-            return result.text
-        return str(result)
-        
-llm = GeminiLLMWrapper(model="gemini-2.5-flash", api_key=GOOGLE_API_KEY)
+llm = LLM(model="gemini/gemini-2.5-flash")
 
 # --- Define Graph State ---
 class ResearchState(TypedDict):
@@ -48,6 +33,8 @@ class ResearchState(TypedDict):
     final_report: Dict[str, Any]
     retries: int
     max_retries: int
+    similarity_failures: int
+    max_similarity_failures: int
 
 # --- Define Agents ---
 
@@ -93,61 +80,68 @@ def designer_node(state: ResearchState) -> ResearchState:
     The constraints are: {json.dumps(state['constraints'])}
     The conversation history is:
     {"\n".join(state['conversation_history'])}
-    
+
     Based on this, propose a new, valid SMILES string. Output ONLY the SMILES string.
     """
-    
     task = Task(description=prompt, agent=designer_agent, expected_output="A single SMILES string.")
-    crew = Crew(agents=[designer_agent], tasks=[task], verbose=False)
+    crew = Crew(
+        agents=[designer_agent],
+        tasks=[task],
+        verbose=False
+    )
     
-    new_smiles = crew.kickoff()
+    crew_output = crew.kickoff()
     
-    # Clean up potential markdown formatting from the LLM
-    cleaned_smiles = new_smiles.strip().replace("`", "").replace("python", "").replace("\n", "")
-    
+    # Check if crew_output has raw attribute, and it's a string
+    if hasattr(crew_output, 'raw') and isinstance(crew_output.raw, str):
+        new_smiles_raw = crew_output.raw
+    elif isinstance(crew_output, str):
+        # Fallback in case kickoff() *does* return a string (older versions)
+        new_smiles_raw = crew_output
+    else:
+        # Handle unexpected output, e.g., log it and use a placeholder
+        print(f"Warning: Unexpected crew output type: {type(crew_output)}")
+        # You might want to force a retry or failure here
+        new_smiles_raw = "" # or raise an exception
+        
+    cleaned_smiles = new_smiles_raw.strip().replace("`", "").replace("python", "").replace("\n", "")
     state['proposed_smiles'] = cleaned_smiles
     state['retries'] += 1
-    state['conversation_history'].append(f"Designer (Attempt {state['retries']}): Proposed {state['proposed_smiles']}")
-    
+    state['conversation_history'].append(f"Designer (Attempt {state['retries']}): Proposed {cleaned_smiles}")
     return state
 
 def validator_node(state: ResearchState) -> ResearchState:
     smiles = state['proposed_smiles']
     original_smiles = state['input_smiles']
-    
-    # --- MODIFIED VALIDATOR PROMPT ---
-    # Use the validator agent to get a natural language summary
     prompt = f"""
     Validate the proposed SMILES string: {smiles}
     Original SMILES for comparison: {original_smiles}
-    
-    You MUST use your tools to find:
-    1.  Is the proposed SMILES valid? (use get_is_smiles_string_valid)
-    2.  What is its LogP? (use get_logp)
-    3.  What is its similarity to the original? (use get_similarity)
-    4.  What is its Molecular Weight? (use get_molecular_weight)
-    5.  What is its TPSA? (use get_tpsa)
-    6.  How many aromatic rings? (use get_aromatic_rings)
-    7.  How many H-Bond Donors? (use get_h_bond_donors)
-    8.  How many H-Bond Acceptors? (use get_h_bond_acceptors)
-    9.  How many Rotatable Bonds? (use get_rotatable_bonds)
-    10. How many Lipinski Violations? (use get_lipinski_violations)
-    
+    You MUST use your tools to find all of the following properties:
+    LogP, TPSA, Molecular Weight, Aromatic Rings, H-Bond Donors, H-Bond Acceptors,
+    Rotatable Bonds, Lipinski Violations, and Similarity to the original.
     After getting all data, write a one-paragraph summary.
     """
-    
     task = Task(description=prompt, agent=validator_agent, expected_output="A one-paragraph summary of all validation data.")
-    crew = Crew(agents=[validator_agent], tasks=[task], verbose=False)
+    crew = Crew(
+        agents=[validator_agent],
+        tasks=[task],
+        verbose=False
+    )
     
-    validation_summary = crew.kickoff()
-    
-    # Manually call tools to get structured data for the router
+    crew_output = crew.kickoff()
+
+    if hasattr(crew_output, 'raw') and isinstance(crew_output.raw, str):
+        validation_summary = crew_output.raw
+    elif isinstance(crew_output, str):
+        validation_summary = crew_output
+    else:
+        print(f"Warning: Unexpected crew output type: {type(crew_output)}")
+        validation_summary = "Error: Could not get validation summary from agent."
+        
     valid_str = get_is_smiles_string_valid.run(smiles)
     if valid_str != "Valid":
         results = {"is_valid": False, "summary": validation_summary}
     else:
-        # --- MODIFIED RESULTS DICTIONARY ---
-        # Store all properties for the router
         results = {
             "is_valid": True,
             "logp": float(get_logp.run(smiles)),
@@ -161,7 +155,6 @@ def validator_node(state: ResearchState) -> ResearchState:
             "lipinski_violations": int(get_lipinski_violations.run(smiles)),
             "summary": validation_summary
         }
-        
     state['validation_results'] = results
     state['conversation_history'].append(f"Validator: {validation_summary}")
     return state
@@ -172,7 +165,7 @@ def synthesizer_node(state: ResearchState) -> ResearchState:
     # Check if the router set meets_constraints to True
     if state['validation_results'].get("meets_constraints", False):
         status = "Success"
-        
+
     report = {
         "status": status,
         "final_smiles": state['proposed_smiles'],
@@ -180,7 +173,7 @@ def synthesizer_node(state: ResearchState) -> ResearchState:
         "history": state['conversation_history'],
         "attempts": state['retries']
     }
-    
+
     state['final_report'] = report
     return state
 
@@ -192,12 +185,12 @@ def should_continue(state: ResearchState) -> str:
         state['validation_results']['summary'] = "Failure: Max retries reached."
         state['validation_results']['meets_constraints'] = False
         return "synthesize"
-    
+
     results = state['validation_results']
     constraints = state['constraints']
     goal = state['optimization_goal']
     original_smiles = state['input_smiles']
-    
+
     # Hard stop 2: Invalid SMILES
     if not results.get("is_valid", False):
         state['conversation_history'].append("Router: Invalid SMILES. Retrying.")
@@ -208,7 +201,7 @@ def should_continue(state: ResearchState) -> str:
     if results.get("similarity", 1.0) < min_similarity:
         state['conversation_history'].append(f"Router: Similarity {results['similarity']} is below threshold {min_similarity}. Retrying.")
         return "design"
-    
+
     # Hard stop 4: Molecular Weight constraints
     mwMin = constraints.get("mwMin", 0)
     mwMax = constraints.get("mwMax", 1000)
@@ -217,11 +210,7 @@ def should_continue(state: ResearchState) -> str:
         state['conversation_history'].append(f"Router: MW {mw} is outside allowed range ({mwMin}-{mwMax}). Retrying.")
         return "design"
 
-
-    # --- MODIFIED GOAL CHECKING ---
-    # Now, check if the specific optimization goal was met.
-    # If not, send back to designer.
-    
+    # --- GOAL CHECKING ---
     goal_met = False
     failure_message = ""
 
@@ -233,7 +222,7 @@ def should_continue(state: ResearchState) -> str:
                 goal_met = True
             else:
                 failure_message = f"New LogP {new_val} is not less than original {original_val}."
-        
+
         elif "Increase LogP" in goal:
             original_val = float(get_logp.run(original_smiles))
             new_val = results['logp']
@@ -329,7 +318,7 @@ def should_continue(state: ResearchState) -> str:
                 goal_met = True
             else:
                 failure_message = f"New Rotatable Bonds {new_val} is not greater than original {original_val}."
-
+        
         elif "Improve Lipinski" in goal:
             original_val = int(get_lipinski_violations.run(original_smiles))
             new_val = results['lipinski_violations']
@@ -339,28 +328,21 @@ def should_continue(state: ResearchState) -> str:
                 failure_message = f"New Lipinski Violations {new_val} is not less than original {original_val}."
 
         elif "Decrease Toxicity" in goal:
-            # This goal is not verifiable with current tools.
-            # We will assume the designer is attempting it and pass validation
-            # as long as other constraints are met.
             goal_met = True
             state['conversation_history'].append("Router: Goal is 'Decrease Toxicity'. This is not verifiable by tools, passing to synthesis if constraints are met.")
 
         else:
-            # Unknown goal, pass through
-            goal_met = True
+            goal_met = False
             state['conversation_history'].append(f"Router: Unknown goal '{goal}'. Passing to synthesis if constraints are met.")
 
     except Exception as e:
-        # Catch errors from tool calls (e.g., if original SMILES was invalid, though it shouldn't be)
         state['conversation_history'].append(f"Router: Error during goal check: {e}. Retrying.")
         return "design"
 
-    # Final decision
     if not goal_met:
         state['conversation_history'].append(f"Router: Goal not met. {failure_message} Retrying.")
         return "design"
 
-    # If all checks pass
     state['validation_results']['meets_constraints'] = True
     state['conversation_history'].append("Router: All constraints and goals met. Proceeding to final synthesis.")
     return "synthesize"
