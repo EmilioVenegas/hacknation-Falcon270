@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Card } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Loader2, HelpCircle } from "lucide-react";
 
 interface ControlPanelProps {
   onRunCrew: (params: ResearchParams) => void;
@@ -91,31 +92,27 @@ export const ControlPanel = ({ onRunCrew, isRunning }: ControlPanelProps) => {
             <SelectContent className="bg-popover z-50">
               <SelectGroup>
                 <SelectLabel className="text-muted-foreground">Physicochemical Properties</SelectLabel>
-                {/* --- MODIFIED VALUES --- */}
-                <SelectItem value="Decrease LogP">Decrease LogP (Make more hydrophilic)</SelectItem>
-                <SelectItem value="Increase LogP">Increase LogP (Make more lipophilic)</SelectItem>
-                {/* Note: Your graph.py router only checks for the two LogP goals.
-                  You will need to add router logic for these other goals to make them work.
-                */}
-                <SelectItem value="Decrease TPSA">Decrease Polar Surface Area (TPSA)</SelectItem>
-                <SelectItem value="Increase TPSA">Increase Polar Surface Area (TPSA)</SelectItem>
-                <SelectItem value="Decrease MW">Decrease Molecular Weight</SelectItem>
+                <SelectItem value="decrease_logp">Decrease LogP (Make more hydrophilic)</SelectItem>
+                <SelectItem value="increase_logp">Increase LogP (Make more lipophilic)</SelectItem>
+                <SelectItem value="decrease_tpsa">Decrease Polar Surface Area (TPSA)</SelectItem>
+                <SelectItem value="increase_tpsa">Increase Polar Surface Area (TPSA)</SelectItem>
+                <SelectItem value="decrease_mw">Decrease Molecular Weight</SelectItem>
               </SelectGroup>
               <SelectGroup>
                 <SelectLabel className="text-muted-foreground">Structural Features</SelectLabel>
-                <SelectItem value="Add Aromatic Ring">Add exactly one Aromatic Ring</SelectItem>
-                <SelectItem value="Remove Aromatic Ring">Remove an Aromatic Ring</SelectItem>
-                <SelectItem value="Increase HBD">Increase Hydrogen Bond Donors</SelectItem>
-                <SelectItem value="Decrease HBD">Decrease Hydrogen Bond Donors</SelectItem>
-                <SelectItem value="Increase HBA">Increase Hydrogen Bond Acceptors</SelectItem>
-                <SelectItem value="Decrease HBA">Decrease Hydrogen Bond Acceptors</SelectItem>
-                <SelectItem value="Decrease Rotatable Bonds">Decrease Rotatable Bonds (Make more rigid)</SelectItem>
-                <SelectItem value="Increase Rotatable Bonds">Increase Rotatable Bonds (Make more flexible)</SelectItem>
+                <SelectItem value="add_aromatic">Add exactly one Aromatic Ring</SelectItem>
+                <SelectItem value="remove_aromatic">Remove an Aromatic Ring</SelectItem>
+                <SelectItem value="increase_hbd">Increase Hydrogen Bond Donors</SelectItem>
+                <SelectItem value="decrease_hbd">Decrease Hydrogen Bond Donors</SelectItem>
+                <SelectItem value="increase_hba">Increase Hydrogen Bond Acceptors</SelectItem>
+                <SelectItem value="decrease_hba">Decrease Hydrogen Bond Acceptors</SelectItem>
+                <SelectItem value="decrease_rotatable">Decrease Rotatable Bonds (Make more rigid)</SelectItem>
+                <SelectItem value="increase_rotatable">Increase Rotatable Bonds (Make more flexible)</SelectItem>
               </SelectGroup>
               <SelectGroup>
                 <SelectLabel className="text-muted-foreground">"Big Bet" Goals</SelectLabel>
-                <SelectItem value="Improve Lipinski">Improve 'Lipinski's Rule of 5' Profile</SelectItem>
-                <SelectItem value="Decrease Toxicity">Decrease Predicted Toxicity</SelectItem>
+                <SelectItem value="lipinski">Improve 'Lipinski's Rule of 5' Profile</SelectItem>
+                <SelectItem value="decrease_toxicity">Decrease Predicted Toxicity</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -126,9 +123,19 @@ export const ControlPanel = ({ onRunCrew, isRunning }: ControlPanelProps) => {
           
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label htmlFor="similarity" className="text-sm font-medium">
-                Minimum Tanimoto Similarity
-              </Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Label htmlFor="similarity" className="text-sm font-medium flex items-center gap-1.5 cursor-help">
+                      Minimum Tanimoto Similarity
+                      <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                    </Label>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p>Controla qué tan similar debe ser la molécula optimizada a la original. Un valor más alto (cercano a 1.0) mantiene la estructura más similar, mientras que valores más bajos permiten mayor innovación estructural.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <span className="text-sm font-mono text-muted-foreground">
                 {similarity[0].toFixed(2)}
               </span>
@@ -168,7 +175,6 @@ export const ControlPanel = ({ onRunCrew, isRunning }: ControlPanelProps) => {
                 <Input
                   id="mw-max"
                   type="number"
-
                   value={mwMax}
                   onChange={(e) => setMwMax(Number(e.target.value))}
                   disabled={isRunning}

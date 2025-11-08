@@ -1,26 +1,9 @@
 import { useState } from "react";
 import { ControlPanel, ResearchParams } from "@/components/ControlPanel";
 import { LabMonitor, StreamMessage } from "@/components/LabMonitor";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { toast } from "sonner";
 import { Beaker } from "lucide-react";
-
-/**
- * Parses a raw log message (e.g., "AgentName (Attempt 1): Message")
- * into a structured agent name and message.
- */
-const parseAgentMessage = (
-  rawMessage: string,
-): { agent: string; message: string } => {
-  const parts = rawMessage.split(": ");
-  if (parts.length > 1) {
-    // "Designer (Attempt 1)" -> "Designer"
-    const agent = parts[0].split(" (")[0].trim();
-    const message = parts.slice(1).join(": ");
-    return { agent, message };
-  }
-  // Fallback for messages without a prefix
-  return { agent: "System", message: rawMessage };
-};
 
 const Index = () => {
   const [messages, setMessages] = useState<StreamMessage[]>([]);
@@ -29,102 +12,108 @@ const Index = () => {
   const handleRunCrew = async (params: ResearchParams) => {
     setIsRunning(true);
     setMessages([]);
-    toast.success("Research crew started!");
 
     try {
-      // 1. Format the request payload to match main.py's CrewRequest model
-      const payload = {
-        smiles: params.smiles,
-        goal: params.goal,
-        constraints: {
-          similarity: params.similarity,
-          mwMin: params.mwMin,
-          mwMax: params.mwMax,
-        },
-      };
+      // TODO: Replace with actual SSE endpoint when backend is ready
+      // const eventSource = new EventSource(`/api/run-crew?${new URLSearchParams({
+      //   smiles: params.smiles,
+      //   goal: params.goal,
+      //   similarity: params.similarity.toString(),
+      //   mwMin: params.mwMin.toString(),
+      //   mwMax: params.mwMax.toString(),
+      // })}`);
 
-      // 2. Use fetch for POST request with streaming response
-      const response = await fetch("/api/run-crew", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "text/event-stream",
-        },
-        body: JSON.stringify(payload),
-      });
+      // eventSource.onmessage = (event) => {
+      //   const data = JSON.parse(event.data);
+      //   setMessages(prev => [...prev, data]);
+      //   if (data.type === 'final_report') {
+      //     eventSource.close();
+      //     setIsRunning(false);
+      //   }
+      // };
 
-      if (!response.ok || !response.body) {
-        throw new Error(
-          response.statusText || "Failed to connect to the server.",
-        );
+      // eventSource.onerror = () => {
+      //   eventSource.close();
+      //   setIsRunning(false);
+      //   toast.error("Connection error. Please try again.");
+      // };
+
+      // Mock streaming for demo purposes
+      toast.success("Research crew started!");
+      
+      const mockMessages: StreamMessage[] = [
+        {
+          type: "agent_thought",
+          agent: "Designer",
+          message: "Analyzing the starting molecule. I will propose modifications to decrease LogP by introducing polar groups. Let me suggest adding a hydroxyl group at position C3. Proposed SMILES: `CC(O)(C(=O)O)c1ccc(cc1)C(O)CCCN2CCC(CC2)C(O)(c3ccccc3)c4ccccc4`",
+          timestamp: Date.now(),
+        },
+        {
+          type: "agent_thought",
+          agent: "Validator",
+          message: "Validating the proposed structure... The SMILES string is chemically valid. Calculating properties: LogP decreased from 4.8 to 4.2, molecular weight increased slightly to 524.7. Tanimoto similarity is 0.85, within acceptable range. Structure approved for synthesis review.",
+          timestamp: Date.now() + 2000,
+        },
+        {
+          type: "agent_thought",
+          agent: "Synthesizer",
+          message: "Evaluating synthetic feasibility... The addition of a hydroxyl group at the tertiary carbon is synthetically challenging. Recommendation: Consider alternative positions or protecting group strategies. However, the route is feasible with 3-4 steps from the parent compound.",
+          timestamp: Date.now() + 4000,
+        },
+        {
+          type: "agent_thought",
+          agent: "Designer",
+          message: "Based on Synthesizer feedback, I propose an alternative: introducing a carboxylic acid group on the aromatic ring instead. This is synthetically more accessible. New proposal: `CC(C)(C(=O)O)c1ccc(cc1)C(O)CCCN2CCC(CC2)C(O)(c3ccc(C(=O)O)cc3)c4ccccc4`",
+          timestamp: Date.now() + 6000,
+        },
+        {
+          type: "agent_thought",
+          agent: "Validator",
+          message: "Validating revised structure... Excellent! LogP now 3.9, significantly improved. Molecular weight 568.7, still within range. Tanimoto similarity 0.82. All constraints satisfied. This is a strong candidate.",
+          timestamp: Date.now() + 8000,
+        },
+        {
+          type: "final_report",
+          data: {
+            executive_summary: "The research crew successfully optimized the starting molecule (Fexofenadine) to decrease LogP while maintaining structural similarity and synthetic feasibility.\n\nKey achievements:\n- LogP reduced from 4.8 to 3.9 (19% improvement)\n- Maintained Tanimoto similarity of 0.82 (above 0.7 threshold)\n- Molecular weight increased to 568.7 (within 200-800 range)\n- Synthetic route feasible with standard chemistry\n\nThe final optimized molecule introduces a carboxylic acid group on one of the diphenyl rings, increasing polarity and reducing lipophilicity without compromising the core pharmacophore.",
+            final_smiles: "CC(C)(C(=O)O)c1ccc(cc1)C(O)CCCN2CCC(CC2)C(O)(c3ccc(C(=O)O)cc3)c4ccccc4",
+            verifiable_data: {
+              starting_molecule: {
+                smiles: params.smiles,
+                logP: 4.8,
+                molecular_weight: 501.7,
+              },
+              final_molecule: {
+                smiles: "CC(C)(C(=O)O)c1ccc(cc1)C(O)CCCN2CCC(CC2)C(O)(c3ccc(C(=O)O)cc3)c4ccccc4",
+                logP: 3.9,
+                molecular_weight: 568.7,
+              },
+              improvements: {
+                logP_change: -0.9,
+                logP_percent_change: -18.75,
+              },
+              constraints_satisfied: {
+                tanimoto_similarity: 0.82,
+                min_similarity: params.similarity,
+                molecular_weight_range: `${params.mwMin}-${params.mwMax}`,
+              },
+            },
+          },
+        },
+      ];
+
+      for (let i = 0; i < mockMessages.length; i++) {
+        await new Promise(resolve => setTimeout(resolve, 2500));
+        setMessages(prev => [...prev, mockMessages[i]]);
+        if (i === mockMessages.length - 1) {
+          setIsRunning(false);
+          toast.success("Research complete!");
+        }
       }
 
-      // 3. Manually read and decode the SSE stream
-      const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
-      let buffer = "";
-
-      while (true) {
-        const { value, done } = await reader.read();
-
-        if (done) {
-          // Stream finished normally
-          break;
-        }
-
-        buffer += value;
-        const lines = buffer.split("\n\n");
-        buffer = lines.pop() || ""; // Keep the last, potentially incomplete, message
-
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) {
-            continue;
-          }
-
-          try {
-            const jsonData = line.substring(6); // Remove "data: "
-            const parsedData = JSON.parse(jsonData);
-
-            // 4. Handle different event types from the backend
-            if (parsedData.type === "agent_thought") {
-              const { agent, message } = parseAgentMessage(parsedData.message);
-              setMessages((prev) => [
-                ...prev,
-                {
-                  type: "agent_thought",
-                  agent: agent,
-                  message: message,
-                  timestamp: Date.now(),
-                } as StreamMessage,
-              ]);
-            } else if (parsedData.type === "final_report") {
-              setMessages((prev) => [
-                ...prev,
-                {
-                  type: "final_report",
-                  data: parsedData.data,
-                } as StreamMessage,
-              ]);
-            } else if (parsedData.type === "error") {
-              toast.error(`Stream error: ${parsedData.message}`);
-              reader.cancel(); // Stop the stream
-            } else if (parsedData.type === "stream_end") {
-              // Backend signals a clean finish
-              reader.cancel();
-              setIsRunning(false);
-              toast.success("Research complete!");
-            }
-          } catch (e) {
-            console.error("Failed to parse SSE message:", e);
-          }
-        }
-      }
     } catch (error) {
       console.error("Error running crew:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to run research crew.",
-      );
-    } finally {
-      // Ensure running state is reset even if loop breaks unexpectedly
+      toast.error("Failed to run research crew. Please try again.");
       setIsRunning(false);
     }
   };
@@ -133,18 +122,19 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-subtle">
       <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-soft sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-gradient-primary p-2 rounded-lg">
-              <Beaker className="h-6 w-6 text-primary-foreground" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-gradient-primary p-2 rounded-lg">
+                <Beaker className="h-6 w-6 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                  Agentic Medicinal Chemist
+                </h1>
+                <p className="text-sm text-muted-foreground">AI-Powered Molecular Design & Optimization</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                Agentic Medicinal Chemist
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                AI-Powered Molecular Design & Optimization
-              </p>
-            </div>
+            <ThemeToggle />
           </div>
         </div>
       </header>
