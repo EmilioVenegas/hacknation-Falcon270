@@ -5,8 +5,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Card } from "@/components/ui/card";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, HelpCircle } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ControlPanelProps {
   onRunCrew: (params: ResearchParams) => void;
@@ -50,16 +54,29 @@ export const ControlPanel = ({ onRunCrew, isRunning }: ControlPanelProps) => {
   return (
     <Card className="h-full flex flex-col border-border shadow-medium">
       <div className="border-b border-border bg-gradient-subtle p-4">
+         <Tooltip>
+    <TooltipTrigger>
         <h2 className="text-xl font-semibold text-foreground">Control Panel</h2>
+        </TooltipTrigger>
+    <TooltipContent>
         <p className="text-sm text-muted-foreground mt-1">Define your molecular optimization task</p>
+        </TooltipContent>
+  </Tooltip>
       </div>
 
       <form onSubmit={handleSubmit} className="flex-1 overflow-auto p-6 space-y-6">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
+            <Tooltip>
+    <TooltipTrigger>
             <Label htmlFor="smiles" className="text-sm font-medium">
               Enter Starting SMILES String
             </Label>
+            </TooltipTrigger>
+            <TooltipContent>
+        <p className="text-sm text-muted-foreground mt-1">Paste or type the SMILES string that will be used as the structural starting point for optimization.</p>
+        </TooltipContent>
+  </Tooltip>
             <Button
               type="button"
               variant="outline"
@@ -82,9 +99,16 @@ export const ControlPanel = ({ onRunCrew, isRunning }: ControlPanelProps) => {
         </div>
 
         <div className="space-y-2">
+          <Tooltip>
+    <TooltipTrigger>
           <Label htmlFor="goal" className="text-sm font-medium">
             Optimization Goal
           </Label>
+          </TooltipTrigger>
+          <TooltipContent>
+        <p className="text-sm text-muted-foreground mt-1">Select the property or performance metric you want the AI to improve.</p>
+        </TooltipContent>
+  </Tooltip>
           <Select value={goal} onValueChange={setGoal} disabled={isRunning}>
             <SelectTrigger id="goal">
               <SelectValue placeholder="Select optimization goal..." />
@@ -119,23 +143,28 @@ export const ControlPanel = ({ onRunCrew, isRunning }: ControlPanelProps) => {
         </div>
 
         <div className="space-y-4 pt-4 border-t border-border">
+         <Tooltip>
+    <TooltipTrigger>
           <h3 className="text-sm font-semibold text-foreground">Guardrails</h3>
-          
+          </TooltipTrigger>
+          <TooltipContent>
+        <p className="text-sm text-muted-foreground mt-1">Set structural similarity constraints to control how much the AI is allowed to modify the molecule.</p>
+        </TooltipContent>
+  </Tooltip>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Label htmlFor="similarity" className="text-sm font-medium flex items-center gap-1.5 cursor-help">
-                      Minimum Tanimoto Similarity
-                      <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
-                    </Label>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">
-                    <p>Controla qué tan similar debe ser la molécula optimizada a la original. Un valor más alto (cercano a 1.0) mantiene la estructura más similar, mientras que valores más bajos permiten mayor innovación estructural.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip>
+    <TooltipTrigger>
+              <Label htmlFor="similarity" className="text-sm font-medium">
+                Minimum Tanimoto Similarity
+              </Label>
+              </TooltipTrigger>
+              <TooltipContent>
+        <p className="text-sm text-muted-foreground mt-1">Define how structurally similar the optimized molecules must remain to the original:</p>
+        <p className="text-sm text-muted-foreground mt-1">Higher values (e.g., 0.7): Closer chemical structure (minor modifications).</p>
+        <p className="text-sm text-muted-foreground mt-1">Lower values (e.g., 0.3): Allows larger structural changes.</p>
+        </TooltipContent>
+  </Tooltip>
               <span className="text-sm font-mono text-muted-foreground">
                 {similarity[0].toFixed(2)}
               </span>
@@ -153,7 +182,15 @@ export const ControlPanel = ({ onRunCrew, isRunning }: ControlPanelProps) => {
           </div>
 
           <div className="space-y-2">
+            <Tooltip>
+    <TooltipTrigger>
             <Label className="text-sm font-medium">Molecular Weight Range</Label>
+            </TooltipTrigger>
+            <TooltipContent>
+        <p className="text-sm text-muted-foreground mt-1">Restrict the size of generated molecules to practical or desired ranges.</p>
+         <p className="text-sm text-muted-foreground mt-1">Prevents the AI from proposing molecules that are too small (unstable) or too large (pharmacologically poor).</p>
+        </TooltipContent>
+  </Tooltip>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label htmlFor="mw-min" className="text-xs text-muted-foreground">
