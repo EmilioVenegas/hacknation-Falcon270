@@ -134,12 +134,10 @@ const Index = () => {
       <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-soft sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="bg-gradient-primary p-2 rounded-lg">
-              <Beaker className="h-6 w-6 text-primary-foreground" />
-            </div>
+              <img src="/logo.png" alt="Logo del Agente" className="h-20 w-auto" />
             <div>
               <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                Agentic Medicinal Chemist
+                Arq Molecular Engineering
               </h1>
               <p className="text-sm text-muted-foreground">
                 AI-Powered Molecular Design & Optimization
