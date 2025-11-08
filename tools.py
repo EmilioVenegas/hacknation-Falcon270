@@ -97,6 +97,33 @@ def get_rotatable_bonds(smiles: str) -> str:
     bonds = Descriptors.NumRotatableBonds(mol)
     return f"{bonds}"
 
+@tool
+def get_lipinski_violations(smiles: str) -> str:
+    """
+    Returns the number of Lipinski's Rule of 5 violations.
+    Rules: MW <= 500, LogP <= 5, H-Donors <= 5, H-Acceptors <= 10.
+    """
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return "Invalid SMILES"
+    
+    mw = Descriptors.MolWt(mol)
+    logp = Crippen.MolLogP(mol)
+    donors = Descriptors.NumHDonors(mol)
+    acceptors = Descriptors.NumHAcceptors(mol)
+    
+    violations = 0
+    if mw > 500:
+        violations += 1
+    if logp > 5:
+        violations += 1
+    if donors > 5:
+        violations += 1
+    if acceptors > 10:
+        violations += 1
+        
+    return f"{violations}"
+
 static_tools = [
     get_is_smiles_string_valid,
     get_logp,
@@ -107,6 +134,7 @@ static_tools = [
     get_h_bond_donors,
     get_h_bond_acceptors,
     get_rotatable_bonds,
+    get_lipinski_violations, # <-- Added the new tool here
 ]
 
 # --- Visualization Helper (Not a tool) ---

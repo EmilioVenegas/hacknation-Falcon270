@@ -17,19 +17,13 @@ export const MoleculeVisualization = ({ smiles }: MoleculeVisualizationProps) =>
         setLoading(true);
         setError(false);
         
-        // TODO: Replace with actual API endpoint when backend is ready
-        // const response = await fetch(`/api/visualize?smiles=${encodeURIComponent(smiles)}`);
-        // if (!response.ok) throw new Error('Failed to fetch visualization');
-        // const blob = await response.blob();
-        // setImageUrl(URL.createObjectURL(blob));
         
-        // Mock delay to simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        const response = await fetch(`/api/visualize?smiles=${encodeURIComponent(smiles)}`);
+        if (!response.ok) throw new Error('Failed to fetch visualization');
+          const blob = await response.blob();
+          setImageUrl(URL.createObjectURL(blob));
         
-        // Using a placeholder service that generates molecule images
-        // In production, this will be replaced with the actual backend endpoint
-        const mockImageUrl = `https://placehold.co/400x300/EEF2FF/1E40AF?text=Molecule+${smiles.slice(0, 10)}...`;
-        setImageUrl(mockImageUrl);
+        
         
       } catch (err) {
         console.error("Error fetching molecule visualization:", err);
