@@ -1,6 +1,6 @@
 import io
 from rdkit import Chem, DataStructs
-from rdkit.Chem import Descriptors, Crippen, Draw
+from rdkit.Chem import Descriptors, Crippen, Draw, QED # Import QED
 import sascorer
 from crewai.tools import tool
 
@@ -136,6 +136,19 @@ def get_sa_score(smiles: str) -> str:
     sa_score = sascorer.calculateScore(mol)
     return f"{sa_score:.4f}"
 
+@tool
+def get_qed(smiles: str) -> str:
+    """
+    Returns the Quantitative Estimate of Drug-likeness (QED) of the molecule.
+    The QED score is between 0 (low) and 1 (high).
+    """
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return "Invalid SMILES"
+    
+    qed_score = QED.qed(mol)
+    return f"{qed_score:.4f}"
+
 static_tools = [
     get_is_smiles_string_valid,
     get_logp,
@@ -148,6 +161,7 @@ static_tools = [
     get_rotatable_bonds,
     get_lipinski_violations,
     get_sa_score,
+    get_qed,
 ]
 
 # --- Visualization Helper (Not a tool) ---

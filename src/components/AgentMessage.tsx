@@ -54,7 +54,7 @@ export const AgentMessage = ({ thought }: AgentMessageProps) => {
   
   const validationDataEntries = thought.validation_data
     ? Object.entries(thought.validation_data)
-        .filter(([key]) => key !== 'summary' && key !== 'is_valid' && key !== 'meets_constraints') // Filter out metadata
+        .filter(([key]) => key !== 'summary' && key !== 'is_valid' && key !== 'meets_constraints' && key !== 'original_props') // Filter out metadata
     : [];
 
   return (
