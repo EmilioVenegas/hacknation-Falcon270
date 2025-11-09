@@ -1,9 +1,26 @@
 import { useState } from "react";
 import { ControlPanel, ResearchParams } from "@/components/ControlPanel";
 import { LabMonitor, StreamMessage } from "@/components/LabMonitor";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { toast } from "sonner";
 import { Beaker } from "lucide-react";
+
+/**
+ * Parses a raw log message (e.g., "AgentName (Attempt 1): Message")
+ * into a structured agent name and message.
+ */
+const parseAgentMessage = (
+  rawMessage: string,
+): { agent: string; message: string } => {
+  const parts = rawMessage.split(": ");
+  if (parts.length > 1) {
+    // "Designer (Attempt 1)" -> "Designer"
+    const agent = parts[0].split(" (")[0].trim();
+    const message = parts.slice(1).join(": ");
+    return { agent, message };
+  }
+  // Fallback for messages without a prefix
+  return { agent: "System", message: rawMessage };
+};
 
 const Index = () => {
   const [messages, setMessages] = useState<StreamMessage[]>([]);
@@ -14,45 +31,23 @@ const Index = () => {
     setMessages([]);
 
     try {
-      // TODO: Replace with actual SSE endpoint when backend is ready
-      // const eventSource = new EventSource(`/api/run-crew?${new URLSearchParams({
-      //   smiles: params.smiles,
-      //   goal: params.goal,
-      //   similarity: params.similarity.toString(),
-      //   mwMin: params.mwMin.toString(),
-      //   mwMax: params.mwMax.toString(),
-      // })}`);
-
-      // eventSource.onmessage = (event) => {
-      //   const data = JSON.parse(event.data);
-      //   setMessages(prev => [...prev, data]);
-      //   if (data.type === 'final_report') {
-      //     eventSource.close();
-      //     setIsRunning(false);
-      //   }
-      // };
-
-      // eventSource.onerror = () => {
-      //   eventSource.close();
-      //   setIsRunning(false);
-      //   toast.error("Connection error. Please try again.");
-      // };
-
-      // Mock streaming for demo purposes
-      toast.success("Research crew started!");
-      
-      const mockMessages: StreamMessage[] = [
-        {
-          type: "agent_thought",
-          agent: "Designer",
-          message: "Analyzing the starting molecule. I will propose modifications to decrease LogP by introducing polar groups. Let me suggest adding a hydroxyl group at position C3. Proposed SMILES: `CC(O)(C(=O)O)c1ccc(cc1)C(O)CCCN2CCC(CC2)C(O)(c3ccccc3)c4ccccc4`",
-          timestamp: Date.now(),
+      // 1. Format the request payload to match main.py's CrewRequest model
+      const payload = {
+        smiles: params.smiles,
+        goal: params.goal,
+        constraints: {
+          similarity: params.similarity,
+          mwMin: params.mwMin,
+          mwMax: params.mwMax,
         },
-        {
-          type: "agent_thought",
-          agent: "Validator",
-          message: "Validating the proposed structure... The SMILES string is chemically valid. Calculating properties: LogP decreased from 4.8 to 4.2, molecular weight increased slightly to 524.7. Tanimoto similarity is 0.85, within acceptable range. Structure approved for synthesis review.",
-          timestamp: Date.now() + 2000,
+      };
+
+      // 2. Use fetch for POST request with streaming response
+      const response = await fetch("/api/run-crew", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "text/event-stream",
         },
         body: JSON.stringify(payload),
       });
@@ -124,10 +119,13 @@ const Index = () => {
           }
         }
       }
-
     } catch (error) {
       console.error("Error running crew:", error);
-      toast.error("Failed to run research crew. Please try again.");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to run research crew.",
+      );
+    } finally {
+      // Ensure running state is reset even if loop breaks unexpectedly
       setIsRunning(false);
     }
   };
@@ -146,7 +144,6 @@ const Index = () => {
                 AI-Powered Molecular Design & Optimization
               </p>
             </div>
-            <ThemeToggle />
           </div>
         </div>
       </header>
