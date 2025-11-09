@@ -117,11 +117,38 @@ def validator_node(state: ResearchState) -> ResearchState:
     Validate the proposed SMILES string: {smiles}
     Original SMILES for comparison: {original_smiles}
     You MUST use your tools to find all of the following properties:
-    LogP, TPSA, Molecular Weight, Aromatic Rings, H-Bond Donors, H-Bond Acceptors,
-    Rotatable Bonds, Lipinski Violations, and Similarity to the original.
-    After getting all data, write a one-paragraph summary.
+    - get_is_smiles_string_valid
+    - get_logp
+    - get_tpsa
+    - get_molecular_weight
+    - get_aromatic_rings
+    - get_h_bond_donors
+    - get_h_bond_acceptors
+    - get_rotatable_bonds
+    - get_lipinski_violations
+    - get_similarity
+
+    After gathering all data, format the output *exactly* as follows, with each item on a new line:
+
+    Validation Summary
+    - Status: [Result from get_is_smiles_string_valid]
+    - LogP: [Result from get_logp]
+    - TPSA**: [Result from get_tpsa]
+    - Molecular Weight: [Result from get_molecular_weight]
+    - Aromatic Rings: [Result from get_aromatic_rings]
+    - H-Bond Donors: [Result from get_h_bond_donors]
+    - H-Bond Acceptors: [Result from get_h_bond_acceptors]
+    - Rotatable Bonds: [Result from get_rotatable_bonds]
+    - Lipinski Violations: [Result from get_lipinski_violations]
+    - Tanimoto Similarity: [Result from get_similarity]
+    - Analysis: [Your brief, one-sentence analysis of these results.]
     """
-    task = Task(description=prompt, agent=validator_agent, expected_output="A one-paragraph summary of all validation data.")
+    
+    task = Task(
+        description=prompt,
+        agent=validator_agent,
+        expected_output="A multi-line formatted summary starting with 'Validation Summary' and followed by a bulleted list of all properties."
+    )
     crew = Crew(
         agents=[validator_agent],
         tasks=[task],
@@ -165,6 +192,9 @@ def synthesizer_node(state: ResearchState) -> ResearchState:
     # Check if the router set meets_constraints to True
     if state['validation_results'].get("meets_constraints", False):
         status = "Success"
+        
+    status_message = "Research complete. Compiling final report." if status == "Success" else "Research failed. Compiling final report."
+    state['conversation_history'].append(f"Synthesizer: {status_message}")
 
     report = {
         "status": status,
