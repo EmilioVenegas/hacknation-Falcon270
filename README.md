@@ -1,10 +1,10 @@
-# Welcome to your Lovable project
+# 🧪 Agentic Medicinal Chemist (AMC)
 
-## Project info
+## 🚀 Project Overview
 
-**URL**: https://lovable.dev/projects/61a791b0-575c-4aa8-a07d-68a25b250a5b
+**Built with Lovable**: https://lovable.dev/projects/61a791b0-575c-4aa8-a07d-68a25b250a5b
 
-## How can I edit this code?
+## 🛠️ How to Get Started
 
 There are several ways of editing your application.
 
@@ -50,21 +50,21 @@ npm run dev
 - Click on "New codespace" to launch a new Codespace environment.
 - Edit files directly within the Codespace and commit and push your changes once you're done.
 
-## What technologies are used for this project?
+## 💻 Tech Stack
 
-This project is built with:
+Our powerful development stack includes:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- ⚡ Vite - Lightning-fast build tool
+- 📘 TypeScript - Type-safe development
+- ⚛️ React - UI framework
+- 🎨 shadcn/ui - Beautiful component library
+- 🌈 Tailwind CSS - Utility-first styling
 
-## How can I deploy this project?
+## 🚀 Deployment
 
-Simply open [Lovable](https://lovable.dev/projects/61a791b0-575c-4aa8-a07d-68a25b250a5b) and click on Share -> Publish.
+🔄 Simply open [Lovable](https://lovable.dev/projects/61a791b0-575c-4aa8-a07d-68a25b250a5b) and click on Share -> Publish.
 
-## Can I connect a custom domain to my Lovable project?
+## 🌐 Custom Domain Setup
 
 Yes, you can!
 

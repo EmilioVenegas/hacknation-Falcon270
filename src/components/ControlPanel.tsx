@@ -6,6 +6,11 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { Slider } from "@/components/ui/slider";
 import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ControlPanelProps {
   onRunCrew: (params: ResearchParams) => void;
@@ -49,16 +54,29 @@ export const ControlPanel = ({ onRunCrew, isRunning }: ControlPanelProps) => {
   return (
     <Card className="h-full flex flex-col border-border shadow-medium">
       <div className="border-b border-border bg-gradient-subtle p-4">
+         <Tooltip>
+    <TooltipTrigger>
         <h2 className="text-xl font-semibold text-foreground">Control Panel</h2>
+        </TooltipTrigger>
+    <TooltipContent>
         <p className="text-sm text-muted-foreground mt-1">Define your molecular optimization task</p>
+        </TooltipContent>
+  </Tooltip>
       </div>
 
       <form onSubmit={handleSubmit} className="flex-1 overflow-auto p-6 space-y-6">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
+            <Tooltip>
+    <TooltipTrigger>
             <Label htmlFor="smiles" className="text-sm font-medium">
               Enter Starting SMILES String
             </Label>
+            </TooltipTrigger>
+            <TooltipContent>
+        <p className="text-sm text-muted-foreground mt-1">Paste or type the SMILES string that will be used as the structural starting point for optimization.</p>
+        </TooltipContent>
+  </Tooltip>
             <Button
               type="button"
               variant="outline"
@@ -81,9 +99,16 @@ export const ControlPanel = ({ onRunCrew, isRunning }: ControlPanelProps) => {
         </div>
 
         <div className="space-y-2">
+          <Tooltip>
+    <TooltipTrigger>
           <Label htmlFor="goal" className="text-sm font-medium">
             Optimization Goal
           </Label>
+          </TooltipTrigger>
+          <TooltipContent>
+        <p className="text-sm text-muted-foreground mt-1">Select the property or performance metric you want the AI to improve.</p>
+        </TooltipContent>
+  </Tooltip>
           <Select value={goal} onValueChange={setGoal} disabled={isRunning}>
             <SelectTrigger id="goal">
               <SelectValue placeholder="Select optimization goal..." />
@@ -91,44 +116,55 @@ export const ControlPanel = ({ onRunCrew, isRunning }: ControlPanelProps) => {
             <SelectContent className="bg-popover z-50">
               <SelectGroup>
                 <SelectLabel className="text-muted-foreground">Physicochemical Properties</SelectLabel>
-                {/* --- MODIFIED VALUES --- */}
-                <SelectItem value="Decrease LogP">Decrease LogP (Make more hydrophilic)</SelectItem>
-                <SelectItem value="Increase LogP">Increase LogP (Make more lipophilic)</SelectItem>
-                {/* Note: Your graph.py router only checks for the two LogP goals.
-                  You will need to add router logic for these other goals to make them work.
-                */}
-                <SelectItem value="Decrease TPSA">Decrease Polar Surface Area (TPSA)</SelectItem>
-                <SelectItem value="Increase TPSA">Increase Polar Surface Area (TPSA)</SelectItem>
-                <SelectItem value="Decrease MW">Decrease Molecular Weight</SelectItem>
+                <SelectItem value="decrease_logp">Decrease LogP (Make more hydrophilic)</SelectItem>
+                <SelectItem value="increase_logp">Increase LogP (Make more lipophilic)</SelectItem>
+                <SelectItem value="decrease_tpsa">Decrease Polar Surface Area (TPSA)</SelectItem>
+                <SelectItem value="increase_tpsa">Increase Polar Surface Area (TPSA)</SelectItem>
+                <SelectItem value="decrease_mw">Decrease Molecular Weight</SelectItem>
               </SelectGroup>
               <SelectGroup>
                 <SelectLabel className="text-muted-foreground">Structural Features</SelectLabel>
-                <SelectItem value="Add Aromatic Ring">Add exactly one Aromatic Ring</SelectItem>
-                <SelectItem value="Remove Aromatic Ring">Remove an Aromatic Ring</SelectItem>
-                <SelectItem value="Increase HBD">Increase Hydrogen Bond Donors</SelectItem>
-                <SelectItem value="Decrease HBD">Decrease Hydrogen Bond Donors</SelectItem>
-                <SelectItem value="Increase HBA">Increase Hydrogen Bond Acceptors</SelectItem>
-                <SelectItem value="Decrease HBA">Decrease Hydrogen Bond Acceptors</SelectItem>
-                <SelectItem value="Decrease Rotatable Bonds">Decrease Rotatable Bonds (Make more rigid)</SelectItem>
-                <SelectItem value="Increase Rotatable Bonds">Increase Rotatable Bonds (Make more flexible)</SelectItem>
+                <SelectItem value="add_aromatic">Add exactly one Aromatic Ring</SelectItem>
+                <SelectItem value="remove_aromatic">Remove an Aromatic Ring</SelectItem>
+                <SelectItem value="increase_hbd">Increase Hydrogen Bond Donors</SelectItem>
+                <SelectItem value="decrease_hbd">Decrease Hydrogen Bond Donors</SelectItem>
+                <SelectItem value="increase_hba">Increase Hydrogen Bond Acceptors</SelectItem>
+                <SelectItem value="decrease_hba">Decrease Hydrogen Bond Acceptors</SelectItem>
+                <SelectItem value="decrease_rotatable">Decrease Rotatable Bonds (Make more rigid)</SelectItem>
+                <SelectItem value="increase_rotatable">Increase Rotatable Bonds (Make more flexible)</SelectItem>
               </SelectGroup>
               <SelectGroup>
                 <SelectLabel className="text-muted-foreground">"Big Bet" Goals</SelectLabel>
-                <SelectItem value="Improve Lipinski">Improve 'Lipinski's Rule of 5' Profile</SelectItem>
-                <SelectItem value="Decrease Toxicity">Decrease Predicted Toxicity</SelectItem>
+                <SelectItem value="lipinski">Improve 'Lipinski's Rule of 5' Profile</SelectItem>
+                <SelectItem value="decrease_toxicity">Decrease Predicted Toxicity</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-4 pt-4 border-t border-border">
+         <Tooltip>
+    <TooltipTrigger>
           <h3 className="text-sm font-semibold text-foreground">Guardrails</h3>
-          
+          </TooltipTrigger>
+          <TooltipContent>
+        <p className="text-sm text-muted-foreground mt-1">Set structural similarity constraints to control how much the AI is allowed to modify the molecule.</p>
+        </TooltipContent>
+  </Tooltip>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
+              <Tooltip>
+    <TooltipTrigger>
               <Label htmlFor="similarity" className="text-sm font-medium">
                 Minimum Tanimoto Similarity
               </Label>
+              </TooltipTrigger>
+              <TooltipContent>
+        <p className="text-sm text-muted-foreground mt-1">Define how structurally similar the optimized molecules must remain to the original:</p>
+        <p className="text-sm text-muted-foreground mt-1">Higher values (e.g., 0.7): Closer chemical structure (minor modifications).</p>
+        <p className="text-sm text-muted-foreground mt-1">Lower values (e.g., 0.3): Allows larger structural changes.</p>
+        </TooltipContent>
+  </Tooltip>
               <span className="text-sm font-mono text-muted-foreground">
                 {similarity[0].toFixed(2)}
               </span>
@@ -146,7 +182,15 @@ export const ControlPanel = ({ onRunCrew, isRunning }: ControlPanelProps) => {
           </div>
 
           <div className="space-y-2">
+            <Tooltip>
+    <TooltipTrigger>
             <Label className="text-sm font-medium">Molecular Weight Range</Label>
+            </TooltipTrigger>
+            <TooltipContent>
+        <p className="text-sm text-muted-foreground mt-1">Restrict the size of generated molecules to practical or desired ranges.</p>
+         <p className="text-sm text-muted-foreground mt-1">Prevents the AI from proposing molecules that are too small (unstable) or too large (pharmacologically poor).</p>
+        </TooltipContent>
+  </Tooltip>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label htmlFor="mw-min" className="text-xs text-muted-foreground">
@@ -168,7 +212,6 @@ export const ControlPanel = ({ onRunCrew, isRunning }: ControlPanelProps) => {
                 <Input
                   id="mw-max"
                   type="number"
-
                   value={mwMax}
                   onChange={(e) => setMwMax(Number(e.target.value))}
                   disabled={isRunning}
