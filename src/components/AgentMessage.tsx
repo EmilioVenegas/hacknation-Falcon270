@@ -48,7 +48,7 @@ export const AgentMessage = ({ thought }: AgentMessageProps) => {
 
   // --- Logic to show visualization (defined ONCE) ---
   const showVisualization =
-    (thought.agent === "Validator" || thought.agent === "Synthesizer") &&
+    (thought.agent === "Validator") &&
     thought.proposed_smiles &&
     thought.proposed_smiles.length > 0;
   

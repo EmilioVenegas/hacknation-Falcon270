@@ -2,12 +2,14 @@ import json
 import uvicorn
 import io
 from fastapi import FastAPI, Query
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Any
 from graph import compiled_graph, ResearchState
-from tools import visualize_molecule_to_png
+from tools import (
+    visualize_molecule_to_png, get_is_smiles_string_valid, get_sa_score
+)
 
 # --- FastAPI App Setup ---
 app = FastAPI(
@@ -47,16 +49,41 @@ async def get_visualize(smiles: str = Query(..., description="The SMILES string 
             status_code=400
         )
 
+@app.get("/api/get-sa-score")
+async def get_sa_score_endpoint(smiles: str = Query(..., description="The SMILES string to score")):
+    """
+    Calculates the Synthesizability (SA) Score for a given SMILES string.
+    """
+    try:
+        is_valid = get_is_smiles_string_valid.run(smiles)
+        if is_valid != "Valid":
+            return JSONResponse(content={"valid": False, "sa_score": None, "error": "Invalid SMILES"}, status_code=400)
+        
+        sa_score_str = get_sa_score.run(smiles)
+        sa_score = float(sa_score_str)
+        return JSONResponse(content={"valid": True, "sa_score": sa_score})
+        
+    except Exception as e:
+        return JSONResponse(content={"valid": False, "sa_score": None, "error": str(e)}, status_code=500)
+
 @app.post("/api/run-crew")
 async def run_crew(request: CrewRequest):
     """
     Runs the agentic crew and streams the results as Server-Sent Events (SSE).
     """
     
+    constraints = request.constraints
+    # Set default (unconstrained) values if toggles are off
+    if not constraints.get("isMwEnabled", False):
+        constraints["mwMin"] = 0
+        constraints["mwMax"] = 9999
+    if not constraints.get("isSaScoreEnabled", False):
+        constraints["saScore"] = 10.0 # 10 is max, so default is no constraint
+    
     initial_state = ResearchState(
         input_smiles=request.smiles,
         optimization_goal=request.goal,
-        constraints=request.constraints,
+        constraints=constraints, # Pass the modified constraints
         proposed_smiles="",
         validation_results={},
         conversation_history=[],
@@ -66,8 +93,6 @@ async def run_crew(request: CrewRequest):
         imilarity_failures=0,
         max_similarity_failures=4
     )
-
-    # In main.py
 
     async def event_stream():
         """The async generator for streaming SSE."""

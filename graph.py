@@ -10,7 +10,8 @@ from dotenv import load_dotenv
 from tools import (
     static_tools, get_is_smiles_string_valid, get_logp, get_similarity,
     get_molecular_weight, get_tpsa, get_aromatic_rings, get_h_bond_donors,
-    get_h_bond_acceptors, get_rotatable_bonds, get_lipinski_violations
+    get_h_bond_acceptors, get_rotatable_bonds, get_lipinski_violations,
+    get_sa_score 
 )
 
 # --- Load API Key ---
@@ -126,6 +127,7 @@ def validator_node(state: ResearchState) -> ResearchState:
     - get_h_bond_acceptors
     - get_rotatable_bonds
     - get_lipinski_violations
+    - get_sa_score 
     - get_similarity
 
     After gathering all data, format the output *exactly* as follows, with each item on a new line:
@@ -133,13 +135,14 @@ def validator_node(state: ResearchState) -> ResearchState:
     Validation Summary
     - Status: [Result from get_is_smiles_string_valid]
     - LogP: [Result from get_logp]
-    - TPSA**: [Result from get_tpsa]
+    - TPSA: [Result from get_tpsa]
     - Molecular Weight: [Result from get_molecular_weight]
     - Aromatic Rings: [Result from get_aromatic_rings]
     - H-Bond Donors: [Result from get_h_bond_donors]
     - H-Bond Acceptors: [Result from get_h_bond_acceptors]
     - Rotatable Bonds: [Result from get_rotatable_bonds]
     - Lipinski Violations: [Result from get_lipinski_violations]
+    - SA Score: [Result from get_sa_score]
     - Tanimoto Similarity: [Result from get_similarity]
     - Analysis: [Your brief, one-sentence analysis of these results.]
     """
@@ -180,6 +183,7 @@ def validator_node(state: ResearchState) -> ResearchState:
             "hba": int(get_h_bond_acceptors.run(smiles)),
             "rotatable_bonds": int(get_rotatable_bonds.run(smiles)),
             "lipinski_violations": int(get_lipinski_violations.run(smiles)),
+            "sa_score": float(get_sa_score.run(smiles)), 
             "summary": validation_summary
         }
     state['validation_results'] = results
@@ -238,6 +242,13 @@ def should_continue(state: ResearchState) -> str:
     mw = results.get("mw", 0)
     if not (mwMin <= mw <= mwMax):
         state['conversation_history'].append(f"Router: MW {mw} is outside allowed range ({mwMin}-{mwMax}). Retrying.")
+        return "design"
+
+    # --- NEW: Hard stop 5: SA Score constraint ---
+    sa_score_constraint = constraints.get("saScore", 10.0) 
+    current_sa_score = results.get("sa_score", 0.0)
+    if current_sa_score > sa_score_constraint:
+        state['conversation_history'].append(f"Router: SA Score {current_sa_score:.2f} is above threshold {sa_score_constraint:.2f}. Retrying.")
         return "design"
 
     # --- GOAL CHECKING ---
