@@ -17,12 +17,14 @@ export interface AgentThought {
 }
 
 export interface FinalReportData {
-  type: "final_report";
-  data: {
-    executive_summary: string;
-    final_smiles: string;
-    verifiable_data: Record<string, any>;
-  };
+  type: "final_report";
+  data: {
+    status: "Success" | "Failure";
+    final_smiles: string;
+    validation: Record<string, any>;
+    history: string[];
+    attempts: number;
+  };
 }
 
 export type StreamMessage = AgentThought | FinalReportData;

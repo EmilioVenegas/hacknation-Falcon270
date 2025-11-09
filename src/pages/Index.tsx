@@ -73,33 +73,41 @@ const Index = () => {
           timestamp: Date.now() + 8000,
         },
         {
-          type: "final_report",
-          data: {
-            executive_summary: "The research crew successfully optimized the starting molecule (Fexofenadine) to decrease LogP while maintaining structural similarity and synthetic feasibility.\n\nKey achievements:\n- LogP reduced from 4.8 to 3.9 (19% improvement)\n- Maintained Tanimoto similarity of 0.82 (above 0.7 threshold)\n- Molecular weight increased to 568.7 (within 200-800 range)\n- Synthetic route feasible with standard chemistry\n\nThe final optimized molecule introduces a carboxylic acid group on one of the diphenyl rings, increasing polarity and reducing lipophilicity without compromising the core pharmacophore.",
-            final_smiles: "CC(C)(C(=O)O)c1ccc(cc1)C(O)CCCN2CCC(CC2)C(O)(c3ccc(C(=O)O)cc3)c4ccccc4",
-            verifiable_data: {
-              starting_molecule: {
-                smiles: params.smiles,
-                logP: 4.8,
-                molecular_weight: 501.7,
-              },
-              final_molecule: {
-                smiles: "CC(C)(C(=O)O)c1ccc(cc1)C(O)CCCN2CCC(CC2)C(O)(c3ccc(C(=O)O)cc3)c4ccccc4",
-                logP: 3.9,
-                molecular_weight: 568.7,
-              },
-              improvements: {
-                logP_change: -0.9,
-                logP_percent_change: -18.75,
-              },
-              constraints_satisfied: {
-                tanimoto_similarity: 0.82,
-                min_similarity: params.similarity,
-                molecular_weight_range: `${params.mwMin}-${params.mwMax}`,
-              },
-            },
-          },
-        },
+          type: "final_report",
+          data: {
+            // --- Propiedades que faltaban ---
+            status: "Success", // Añade un estado
+            history: [         // Añade un historial (puedes usar los 'thoughts')
+              "Analyzing the starting molecule...",
+              "Validating the proposed structure...",
+              "Evaluating synthetic feasibility...",
+              "Based on Synthesizer feedback, I propose an alternative...",
+              "Validating revised structure... This is a strong candidate."
+            ],
+            attempts: 2, // Añade un número de intentos
+
+            // --- Propiedades que ya tenías ---
+            final_smiles: "CC(C)(C(=O)O)c1ccc(cc1)C(O)CCCN2CCC(CC2)C(O)(c3ccc(C(=O)O)cc3)c4ccccc4",
+            
+            // --- Propiedad renombrada ---
+            validation: { // Renombrado de 'verifiable_data' a 'validation'
+              starting_molecule: {
+                smiles: params.smiles,
+                logP: 4.8,
+                molecular_weight: 501.7,
+              },
+              final_molecule: {
+                smiles: "CC(C)(C(=O)O)c1ccc(cc1)C(O)CCCN2CCC(CC2)C(O)(c3ccc(C(=O)O)cc3)c4ccccc4",
+                logP: 3.9,
+                molecular_weight: 568.7,
+              },
+              // ...el resto de tus datos de 'verifiable_data'
+            },
+            
+            // La propiedad 'executive_summary' debe ser eliminada
+            // porque el tipo no la espera.
+          },
+        },
       ];
 
       for (let i = 0; i < mockMessages.length; i++) {
