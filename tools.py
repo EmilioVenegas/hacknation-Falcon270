@@ -1,6 +1,7 @@
 import io
 from rdkit import Chem, DataStructs
 from rdkit.Chem import Descriptors, Crippen, Draw
+import sascorer
 from crewai.tools import tool
 
 # --- RDKit Tooling ---
@@ -123,6 +124,17 @@ def get_lipinski_violations(smiles: str) -> str:
         violations += 1
         
     return f"{violations}"
+@tool
+def get_sa_score(smiles: str) -> str:
+    """
+    Returns the Synthesizability (SA) Score.
+    Ranges from 1 (easy to synthesize) to 10 (hard to synthesize).
+    """
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return "Invalid SMILES"
+    sa_score = sascorer.calculateScore(mol)
+    return f"{sa_score:.4f}"
 
 static_tools = [
     get_is_smiles_string_valid,
@@ -134,7 +146,8 @@ static_tools = [
     get_h_bond_donors,
     get_h_bond_acceptors,
     get_rotatable_bonds,
-    get_lipinski_violations, # <-- Added the new tool here
+    get_lipinski_violations,
+    get_sa_score,
 ]
 
 # --- Visualization Helper (Not a tool) ---
