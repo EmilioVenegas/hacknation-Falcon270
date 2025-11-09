@@ -1,6 +1,5 @@
 import { Card } from "@/components/ui/card";
 import { MoleculeVisualization } from "./MoleculeVisualization";
-import { useState, useEffect } from "react";
 import { Bot, Network } from "lucide-react"; // Imported GitNetwork for Router
 
 interface AgentMessageProps {
@@ -47,11 +46,12 @@ export const AgentMessage = ({ thought }: AgentMessageProps) => {
   const agentColor = agentColors[thought.agent] || "bg-muted border-muted text-muted-foreground";
   const Icon = agentIcons[thought.agent] || Bot;
 
-  const showVisualization = thought.agent === "Designer" &&
-                            thought.proposed_smiles &&
-                            thought.proposed_smiles.length > 0;
+  // --- Logic to show visualization (defined ONCE) ---
+  const showVisualization =
+    (thought.agent === "Validator" || thought.agent === "Synthesizer") &&
+    thought.proposed_smiles &&
+    thought.proposed_smiles.length > 0;
   
-  // --- NEW: Check for validation data to render ---
   const validationDataEntries = thought.validation_data
     ? Object.entries(thought.validation_data)
         .filter(([key]) => key !== 'summary' && key !== 'is_valid' && key !== 'meets_constraints') // Filter out metadata
@@ -78,7 +78,15 @@ export const AgentMessage = ({ thought }: AgentMessageProps) => {
             {thought.message}
           </p>
           
-          {/* --- NEW: Render formatted data if it exists --- */}
+          {/* --- This is now the ONLY block that renders the molecule --- */}
+          {showVisualization && (
+            <div className="space-y-3 mt-4 pt-4 border-t border-border">
+              <MoleculeVisualization smiles={thought.proposed_smiles!} />
+            </div>
+          )}
+          {/* --- End of visualization block --- */}
+
+          {/* --- Render formatted data if it exists --- */}
           {validationDataEntries.length > 0 && (
             <div className="mt-3 pt-3 border-t border-border space-y-1.5">
               <div className="grid grid-cols-2 gap-x-4 gap-y-1">
@@ -98,12 +106,7 @@ export const AgentMessage = ({ thought }: AgentMessageProps) => {
             </div>
           )}
 
-          {/* Render the molecule visualization (only for Designer) */}
-          {showVisualization && (
-            <div className="space-y-3 mt-4 pt-4 border-t border-border">
-              <MoleculeVisualization smiles={thought.proposed_smiles!} />
-            </div>
-          )}
+          
         </div>
       </div>
     </Card>

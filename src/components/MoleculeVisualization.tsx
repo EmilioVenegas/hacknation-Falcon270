@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertTriangle } from "lucide-react";
 
 interface MoleculeVisualizationProps {
   smiles: string;
@@ -57,9 +57,18 @@ export const MoleculeVisualization = ({ smiles }: MoleculeVisualizationProps) =>
 
   if (error || !imageUrl) {
     return (
-      <Card className="p-6 bg-destructive/5 border-destructive/20">
-        <p className="text-sm text-destructive">Failed to render molecule visualization</p>
-        <p className="text-xs text-muted-foreground mt-1 font-mono">{smiles}</p>
+      <Card className="p-4 bg-destructive/5 border-destructive/20 shadow-soft">
+        <div className="flex items-center gap-3">
+          <AlertTriangle className="h-5 w-5 text-destructive" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-destructive">
+              Invalid SMILES Proposal
+            </p>
+            <p className="text-xs text-muted-foreground mt-1 font-mono truncate" title={smiles}>
+              {smiles}
+            </p>
+          </div>
+        </div>
       </Card>
     );
   }

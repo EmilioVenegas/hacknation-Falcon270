@@ -89,17 +89,6 @@ async def run_crew(request: CrewRequest):
                     break
 
                 current_state = event[last_node]
-
-                # Check for the final report on *every* event,
-                # not just on "__end__". The "synthesize" node
-                # is the one that creates this.
-                final_report = current_state.get("final_report")
-                if final_report:
-                    # If we have a final report, send it and we are done.
-                    sse_data = {"type": "final_report", "data": final_report}
-                    yield f"data: {json.dumps(sse_data)}\n\n"
-                    break # Stop the stream
-                
                 # Check for new messages in conversation_history
                 history = current_state.get("conversation_history", [])
                 new_messages_count = len(history) - last_history_index
@@ -109,13 +98,27 @@ async def run_crew(request: CrewRequest):
                         sse_data = {
                             "type": "agent_thought",
                             "message": history[i],
-                            "proposed_smiles": current_state.get("proposed_smiles", "")
+                            # Always include the current proposed SMILES.
+                            # The frontend will decide if it should be shown.
+                            "proposed_smiles": current_state.get("proposed_smiles", ""),
                         }
+                        
+                        # --- REMOVED redundant 'design' and 'synthesize' blocks ---
+
+                        # Keep existing logic to attach validation data
                         if last_node == "validate" and i == len(history) - 1:
                             sse_data["validation_data"] = current_state.get("validation_results")
 
                         yield f"data: {json.dumps(sse_data)}\n\n"
                     last_history_index = len(history)
+
+                # Check for the final report AFTER sending messages
+                final_report = current_state.get("final_report")
+                if final_report:
+                    # If we have a final report, send it and we are done.
+                    sse_data = {"type": "final_report", "data": final_report}
+                    yield f"data: {json.dumps(sse_data)}\n\n"
+                    break # Stop the stream
         except Exception as e:
             print(f"Error in stream: {e}")
             sse_data = {"type": "error", "message": str(e)}
