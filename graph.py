@@ -200,12 +200,59 @@ def synthesizer_node(state: ResearchState) -> ResearchState:
     status_message = "Research complete. Compiling final report." if status == "Success" else "Research failed. Compiling final report."
     state['conversation_history'].append(f"Synthesizer: {status_message}")
 
+    # --- NEW: Synthesizer generates an Executive Summary ---
+    summary_prompt = f"""
+    You are the Lead Research Analyst. Your task is to write a comprehensive, professional, 
+    multi-paragraph Executive Summary (between 150-250 words) based on the following R&D cycle results:
+
+    1. **Initial Molecule (SMILES)**: {state['input_smiles']}
+    2. **Optimization Goal**: {state['optimization_goal']}
+    3. **Final Status**: {status}
+    4. **Final Proposed Molecule (SMILES)**: {state['proposed_smiles']}
+    5. **Final Validation Data (JSON)**: {json.dumps(state['validation_results'], indent=2)}
+    
+    The summary must cover:
+    - The initial problem (goal and starting molecule).
+    - The success or failure of the outcome.
+    - Key findings from the validation data (e.g., how the new molecule's LogP changed, if MW was within range, the final SA Score, etc.).
+    - A concluding sentence on the significance of the result.
+    
+    Output ONLY the Executive Summary text.
+    """
+    
+    summary_task = Task(
+        description=summary_prompt,
+        agent=synthesizer_agent,
+        expected_output="A single, multi-paragraph executive summary."
+    )
+    
+    crew = Crew(
+        agents=[synthesizer_agent],
+        tasks=[summary_task],
+        verbose=False
+    )
+    
+    # Run the Synthesizer task to get the summary
+    executive_summary_raw = crew.kickoff()
+    
+    # Extract raw summary from crew output
+    if hasattr(executive_summary_raw, 'raw') and isinstance(executive_summary_raw.raw, str):
+        executive_summary = executive_summary_raw.raw
+    elif isinstance(executive_summary_raw, str):
+        executive_summary = executive_summary_raw
+    else:
+        executive_summary = "Error: Could not generate executive summary."
+    
+    state['conversation_history'].append(f"Synthesizer: Generated Executive Summary.")
+    # --- END NEW: Synthesizer generates an Executive Summary ---
+
     report = {
         "status": status,
         "final_smiles": state['proposed_smiles'],
         "validation": state['validation_results'],
         "history": state['conversation_history'],
-        "attempts": state['retries']
+        "attempts": state['retries'],
+        "executive_summary": executive_summary,
     }
 
     state['final_report'] = report

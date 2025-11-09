@@ -153,7 +153,10 @@ const Index = () => {
       <main className="container mx-auto px-4 py-6">
         <div className="grid lg:grid-cols-2 gap-6 h-[calc(100vh-120px)]">
           <ControlPanel onRunCrew={handleRunCrew} isRunning={isRunning} />
-          <LabMonitor messages={messages} isRunning={isRunning} />
+          <div className="min-h-0 h-full flex-col ">
+            <LabMonitor messages={messages} isRunning={isRunning} />
+          </div>
+          
         </div>
       </main>
     </div>

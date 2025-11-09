@@ -15,6 +15,7 @@ interface FinalReportProps {
     validation: Record<string, any>;
     history: string[];
     attempts: number;
+    executive_summary?: string;
   };
 }
 
@@ -46,11 +47,9 @@ export const FinalReport = ({ report }: FinalReportProps) => {
       <Card className={`p-6 bg-${statusColor}/5 border-${statusColor}/20 shadow-medium`}>
         <h4 className="font-semibold text-foreground mb-3">Summary</h4>
         <div className="prose prose-sm max-w-none text-foreground/90">
-          <p className="mb-2 leading-relaxed">
-            {/* Use the summary from the validation results, as "executive_summary"
-              doesn't exist in the Python output.
-            */}
-            {report.validation?.summary || "No summary available."}
+          {/* --- MODIFIED: Use the new executive_summary --- */}
+          <p className="mb-2 leading-relaxed whitespace-pre-wrap">
+            {report.executive_summary || report.validation?.summary || "No summary available."}
           </p>
         </div>
       </Card>
