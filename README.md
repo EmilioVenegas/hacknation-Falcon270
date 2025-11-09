@@ -1,73 +1,183 @@
 # 🧪 Agentic Medicinal Chemist (AMC)
 
+<div align="center">
+
+[![Built with Lovable](https://img.shields.io/badge/Built%20with-Lovable-FF69B4)](https://lovable.dev/projects/61a791b0-575c-4aa8-a07d-68a25b250a5b)
+[![Made with React](https://img.shields.io/badge/Made%20with-React-61DAFB?logo=react)](https://reactjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-4.9.5-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-5.0-646CFF?logo=vite)](https://vitejs.dev)
+
+AI-Powered Drug Discovery and Molecular Optimization Platform
+
+[Getting Started](#-getting-started) •
+[Features](#-key-features) •
+[Documentation](#-documentation) •
+[Contributing](#-contributing)
+
+</div>
+
+---
+
 ## 🚀 Project Overview
 
-**Built with Lovable**: https://lovable.dev/projects/61a791b0-575c-4aa8-a07d-68a25b250a5b
+The Agentic Medicinal Chemist (AMC) is a cutting-edge platform that combines modern web technologies with advanced AI to revolutionize drug discovery and molecular optimization. Using a multi-agent system architecture, it enables researchers to:
 
-## 🛠️ How to Get Started
+- 🔍 Explore chemical space efficiently
+- 🧬 Optimize molecular structures
+- 📊 Analyze drug-like properties
+- 🎯 Target specific molecular characteristics
 
-There are several ways of editing your application.
+## ✨ Key Features
 
-**Use Lovable**
+- 🧪 **Interactive Molecular Design**
+  - SMILES-based structure input
+  - Real-time 3D visualization
+  - Instant property calculation
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/61a791b0-575c-4aa8-a07d-68a25b250a5b) and start prompting.
+- 🤖 **AI-Powered Optimization**
+  - Multi-agent collaboration system
+  - Constraint-based optimization
+  - Machine learning predictions
 
-Changes made via Lovable will be committed automatically to this repo.
+- 📈 **Real-time Analysis**
+  - Live property updates
+  - Comprehensive reports
+  - Visual progress tracking
 
-**Use your preferred IDE**
+## 🛠️ Tech Stack
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Frontend Architecture
+- ⚛️ **React 18** - Component-based UI with hooks
+- 📘 **TypeScript** - Type-safe development
+- ⚡ **Vite** - Next-generation frontend tooling
+- 🎨 **shadcn/ui** - Beautiful, accessible components
+- 🌈 **Tailwind CSS** - Utility-first styling
+- 🔄 **React Query** - Server state management
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Backend Technologies
+- 🐍 **FastAPI** - Modern Python web framework
+- 🔌 **SSE** - Real-time server events
+- 🧬 **RDKit** - Chemical informatics engine
+- 🤝 **Multi-agent System** - Collaborative AI architecture
 
-Follow these steps:
+## 📦 Installation
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+### Prerequisites
+```bash
+# Node.js 18+ and Python 3.8+ required
+node --version  # Should be >= 18.0.0
+python --version  # Should be >= 3.8.0
 ```
 
-**Edit a file directly in GitHub**
+### Frontend Setup
+```bash
+# Install dependencies
+npm install
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+# Start development server
+npm run dev
 
-**Use GitHub Codespaces**
+# Build for production
+npm run build
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Backend Setup
+```bash
+# Create virtual environment (recommended)
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+venv\\Scripts\\activate   # Windows
 
-## 💻 Tech Stack
+# Install dependencies
+pip install -r requirements.txt
 
-Our powerful development stack includes:
+# Start backend server
+python main.py
+```
 
-- ⚡ Vite - Lightning-fast build tool
-- 📘 TypeScript - Type-safe development
-- ⚛️ React - UI framework
-- 🎨 shadcn/ui - Beautiful component library
-- 🌈 Tailwind CSS - Utility-first styling
+## 🔧 Development Workflow
+
+1. **Start Development Servers**
+   ```bash
+   # Terminal 1 - Frontend
+   npm run dev
+
+   # Terminal 2 - Backend
+   python main.py
+   ```
+
+2. **Access the Application**
+   - Frontend: http://localhost:8080
+   - Backend API: http://localhost:8000
+   - API Docs: http://localhost:8000/docs
+
+## � Project Structure
+
+```
+/
+├── src/                    # Frontend source
+│   ├── components/         # React components
+│   │   ├── ControlPanel/  # Molecule input & controls
+│   │   ├── LabMonitor/    # Research monitoring
+│   │   └── ui/            # shadcn/ui components
+│   ├── hooks/             # Custom React hooks
+│   ├── lib/               # Utility functions
+│   └── pages/             # Route components
+├── server/                # Backend source
+│   ├── main.py           # FastAPI server
+│   ├── graph.py          # Agent interaction
+│   └── tools.py          # Molecular tools
+└── public/               # Static assets
+```
 
 ## 🚀 Deployment
 
-🔄 Simply open [Lovable](https://lovable.dev/projects/61a791b0-575c-4aa8-a07d-68a25b250a5b) and click on Share -> Publish.
+### Development Build
+```bash
+npm run build:dev
+```
+
+### Production Deployment
+1. Via Lovable Platform
+   - Open [Lovable Project](https://lovable.dev/projects/61a791b0-575c-4aa8-a07d-68a25b250a5b)
+   - Click Share -> Publish
+
+2. Manual Deployment
+   ```bash
+   npm run build
+   # Deploy the 'dist' directory
+   ```
 
 ## 🌐 Custom Domain Setup
 
-Yes, you can!
+1. Navigate to Project > Settings > Domains
+2. Click "Connect Domain"
+3. Follow DNS configuration instructions
+4. [Detailed Setup Guide](https://docs.lovable.dev/features/custom-domain#custom-domain)
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 👥 Contributing
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+1. Fork the repository
+2. Create your feature branch
+   ```bash
+   git checkout -b feature/AmazingFeature
+   ```
+3. Commit your changes
+   ```bash
+   git commit -m 'Add some AmazingFeature'
+   ```
+4. Push to the branch
+   ```bash
+   git push origin feature/AmazingFeature
+   ```
+5. Open a Pull Request
+
+## 📝 License
+
+This project is part of the Lovable platform. See [LICENSE](LICENSE) for details.
+
+## 🤝 Support
+
+- Documentation: [Project Docs](https://docs.lovable.dev)
+- Issues: [GitHub Issues](https://github.com/EmilioVenegas/hacknation-Falcon270/issues)
+- Community: [Lovable Discord](https://discord.gg/lovable)
