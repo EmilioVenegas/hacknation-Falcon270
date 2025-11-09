@@ -6,6 +6,10 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { Slider } from "@/components/ui/slider";
 import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { MoleculeVisualization } from "./MoleculeVisualization"; // <-- Import visualization
+import { Switch } from "@/components/ui/switch"; // <-- Import Switch
+import { Separator } from "@/components/ui/separator"; // <-- Import Separator
+import { cn } from "@/lib/utils"; // <-- Import cn
 
 interface ControlPanelProps {
   onRunCrew: (params: ResearchParams) => void;
@@ -16,8 +20,11 @@ export interface ResearchParams {
   smiles: string;
   goal: string;
   similarity: number;
+  isMwEnabled: boolean; // <-- Add this
   mwMin: number;
   mwMax: number;
+  isSaScoreEnabled: boolean; // <-- Add this
+  saScore: number; // <-- Add this
 }
 
 const EXAMPLE_SMILES = "CC(C)(C(=O)O)c1ccc(cc1)C(O)CCCN2CCC(CC2)C(O)(c3ccccc3)c4ccccc4";
@@ -28,6 +35,9 @@ export const ControlPanel = ({ onRunCrew, isRunning }: ControlPanelProps) => {
   const [similarity, setSimilarity] = useState([0.7]);
   const [mwMin, setMwMin] = useState(200);
   const [mwMax, setMwMax] = useState(800);
+  const [isMwEnabled, setIsMwEnabled] = useState(false); 
+  const [isSaScoreEnabled, setIsSaScoreEnabled] = useState(false); 
+  const [saScore, setSaScore] = useState([5.0]); 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,8 +47,11 @@ export const ControlPanel = ({ onRunCrew, isRunning }: ControlPanelProps) => {
       smiles,
       goal,
       similarity: similarity[0],
+      isMwEnabled,
       mwMin,
       mwMax,
+      isSaScoreEnabled,
+      saScore: saScore[0], 
     });
   };
 
@@ -78,6 +91,12 @@ export const ControlPanel = ({ onRunCrew, isRunning }: ControlPanelProps) => {
             disabled={isRunning}
             className="font-mono text-sm"
           />
+          {/* --- NEW: Show molecule visualization --- */}
+          {smiles && (
+            <div className="pt-4">
+              <MoleculeVisualization smiles={smiles} />
+            </div>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -94,9 +113,7 @@ export const ControlPanel = ({ onRunCrew, isRunning }: ControlPanelProps) => {
                 {/* --- MODIFIED VALUES --- */}
                 <SelectItem value="Decrease LogP">Decrease LogP (Make more hydrophilic)</SelectItem>
                 <SelectItem value="Increase LogP">Increase LogP (Make more lipophilic)</SelectItem>
-                {/* Note: Your graph.py router only checks for the two LogP goals.
-                  You will need to add router logic for these other goals to make them work.
-                */}
+                
                 <SelectItem value="Decrease TPSA">Decrease Polar Surface Area (TPSA)</SelectItem>
                 <SelectItem value="Increase TPSA">Increase Polar Surface Area (TPSA)</SelectItem>
                 <SelectItem value="Decrease MW">Decrease Molecular Weight</SelectItem>
@@ -145,11 +162,58 @@ export const ControlPanel = ({ onRunCrew, isRunning }: ControlPanelProps) => {
             />
           </div>
 
+          {/* --- NEW: Synthesizability Score --- */}
+          <Separator />
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="sa-score-toggle" className="text-sm font-medium">
+                Enable Synthesizability (SA) Score
+              </Label>
+              <Switch
+                id="sa-score-toggle"
+                checked={isSaScoreEnabled}
+                onCheckedChange={setIsSaScoreEnabled}
+                disabled={isRunning}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="sa-score" className={cn("text-sm font-medium", !isSaScoreEnabled && "opacity-50")}>
+                Max SA Score (Lower is better)
+              </Label>
+              <span className={cn("text-sm font-mono text-muted-foreground", !isSaScoreEnabled && "opacity-50")}>
+                {saScore[0].toFixed(1)}
+              </span>
+            </div>
+            <Slider
+              id="sa-score"
+              min={1}
+              max={10}
+              step={0.5}
+              value={saScore}
+              onValueChange={setSaScore}
+              disabled={!isSaScoreEnabled || isRunning}
+              className="py-2"
+            />
+          </div>
+          {/* --- END NEW --- */}
+
+          {/* --- MODIFIED: Molecular Weight Range --- */}
+          <Separator />
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Molecular Weight Range</Label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="mw-toggle" className="text-sm font-medium">
+                Enable Molecular Weight Guardrail
+              </Label>
+              <Switch
+                id="mw-toggle"
+                checked={isMwEnabled}
+                onCheckedChange={setIsMwEnabled}
+                disabled={isRunning}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3 pt-2">
               <div className="space-y-1">
-                <Label htmlFor="mw-min" className="text-xs text-muted-foreground">
+                <Label htmlFor="mw-min" className={cn("text-xs text-muted-foreground", !isMwEnabled && "opacity-50")}>
                   Min
                 </Label>
                 <Input
@@ -157,26 +221,26 @@ export const ControlPanel = ({ onRunCrew, isRunning }: ControlPanelProps) => {
                   type="number"
                   value={mwMin}
                   onChange={(e) => setMwMin(Number(e.target.value))}
-                  disabled={isRunning}
+                  disabled={!isMwEnabled || isRunning}
                   min={0}
                 />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="mw-max" className="text-xs text-muted-foreground">
+                <Label htmlFor="mw-max" className={cn("text-xs text-muted-foreground", !isMwEnabled && "opacity-50")}>
                   Max
                 </Label>
                 <Input
                   id="mw-max"
                   type="number"
-
                   value={mwMax}
                   onChange={(e) => setMwMax(Number(e.target.value))}
-                  disabled={isRunning}
+                  disabled={!isMwEnabled || isRunning}
                   min={0}
                 />
               </div>
             </div>
           </div>
+          {/* --- END MODIFIED --- */}
         </div>
 
         <Button
