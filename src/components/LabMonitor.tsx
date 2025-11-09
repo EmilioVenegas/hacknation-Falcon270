@@ -3,11 +3,6 @@ import { AgentMessage } from "./AgentMessage";
 import { FinalReport } from "./FinalReport";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useEffect, useRef } from "react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 export interface AgentThought {
   type: "agent_thought";
@@ -52,14 +47,8 @@ export const LabMonitor = ({ messages, isRunning }: LabMonitorProps) => {
       <div className="border-b border-border bg-gradient-subtle p-4">
         <div className="flex items-center justify-between">
           <div>
-          <Tooltip>
-          <TooltipTrigger>
             <h2 className="text-xl font-semibold text-foreground">Lab Monitor</h2>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="text-sm text-muted-foreground mt-1">This panel displays the real-time agent activity and research progress.</p>
-          </TooltipContent>
-            </Tooltip>
+            <p className="text-sm text-muted-foreground mt-1">Real-time agent conversation</p>
           </div>
           {isRunning && (
             <div className="flex items-center gap-2 text-sm text-secondary">
