@@ -8,6 +8,8 @@ interface AgentMessageProps {
     agent: string;
     message: string;
     timestamp?: number;
+    proposed_smiles?: string;
+    validation_data?: Record<string, any>;
   };
 }
 
@@ -18,6 +20,7 @@ const agentColors: Record<string, string> = {
   Router: "bg-purple-500/10 border-purple-500/20 text-purple-500", // Added Router
 };
 
+
 // Custom icons for each agent
 const agentIcons: Record<string, React.ElementType> = {
   Designer: Bot,
@@ -26,43 +29,33 @@ const agentIcons: Record<string, React.ElementType> = {
   Router: Network, // Added Router icon
 };
 
-const extractSmilesStrings = (text: string): string[] => {
-  const smilesPatterns = [
-    // This is the new pattern to match the Designer's output
-    /Proposed[:\s]+([A-Za-z0-9@+\-\[\]\(\)=#$\/\\%]+)/gi,
-    // Original patterns
-    /`([A-Za-z0-9@+\-\[\]\(\)=#$\/\\%]+)`/g,
-    /SMILES[:\s]+([A-Za-z0-9@+\-\[\]\(\)=#$\/\\%]+)/gi,
-    /molecule[:\s]+([A-Za-z0-9@+\-\[\]\(\)=#$\/\\%]+)/gi,
-  ];
-
-  const found: string[] = [];
-  
-  for (const pattern of smilesPatterns) {
-    // Use matchAll to find all occurrences
-    const matches = text.matchAll(pattern);
-    for (const match of matches) {
-      const potential = match[1];
-      // Basic validation: not just a number, has some letters, and is a reasonable length
-      if (potential && potential.length > 3 && /[a-zA-Z]/.test(potential)) {
-        found.push(potential);
-      }
-    }
-  }
-
-  // Return unique strings
-  return [...new Set(found)];
+// --- HELPER FUNCTION TO FORMAT KEY ---
+const formatValidationKey = (key: string): string => {
+  return key
+    .replace(/_/g, ' ') // replace underscores
+    .replace('mw', 'MW') // capitalize MW
+    .replace('hbd', 'H-Bond Donors')
+    .replace('hba', 'H-Bond Acceptors')
+    .replace('tpsa', 'TPSA')
+    .replace('logp', 'LogP')
+    .split(' ')
+    .map(s => s.charAt(0).toUpperCase() + s.substring(1)) // capitalize each word
+    .join(' ');
 };
 
 export const AgentMessage = ({ thought }: AgentMessageProps) => {
-  const [smilesStrings, setSmilesStrings] = useState<string[]>([]);
   const agentColor = agentColors[thought.agent] || "bg-muted border-muted text-muted-foreground";
   const Icon = agentIcons[thought.agent] || Bot;
 
-  useEffect(() => {
-    const smiles = extractSmilesStrings(thought.message);
-    setSmilesStrings(smiles);
-  }, [thought.message]);
+  const showVisualization = thought.agent === "Designer" &&
+                            thought.proposed_smiles &&
+                            thought.proposed_smiles.length > 0;
+  
+  // --- NEW: Check for validation data to render ---
+  const validationDataEntries = thought.validation_data
+    ? Object.entries(thought.validation_data)
+        .filter(([key]) => key !== 'summary' && key !== 'is_valid' && key !== 'meets_constraints') // Filter out metadata
+    : [];
 
   return (
     <Card className="p-4 border-border shadow-soft animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
@@ -79,16 +72,36 @@ export const AgentMessage = ({ thought }: AgentMessageProps) => {
               </p>
             )}
           </div>
-          <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+          
+          {/* Render the summary message */}
+          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
             {thought.message}
           </p>
           
-          {smilesStrings.length > 0 && (
+          {/* --- NEW: Render formatted data if it exists --- */}
+          {validationDataEntries.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-border space-y-1.5">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                {validationDataEntries.map(([key, value]) => (
+                  <div key={key} className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">{formatValidationKey(key)}</span>
+                    <span className="font-mono font-medium text-foreground">
+                      {/* Format numbers nicely */}
+                      {typeof value === 'number' ? 
+                        (value % 1 === 0 ? value : value.toFixed(4)) 
+                        : String(value)
+                      }
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Render the molecule visualization (only for Designer) */}
+          {showVisualization && (
             <div className="space-y-3 mt-4 pt-4 border-t border-border">
-              <p className="text-xs font-medium text-muted-foreground">Detected Molecules:</p>
-              {smilesStrings.map((smiles, index) => (
-                <MoleculeVisualization key={index} smiles={smiles} />
-              ))}
+              <MoleculeVisualization smiles={thought.proposed_smiles!} />
             </div>
           )}
         </div>

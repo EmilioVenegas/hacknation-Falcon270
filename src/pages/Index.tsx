@@ -54,68 +54,74 @@ const Index = () => {
           message: "Validating the proposed structure... The SMILES string is chemically valid. Calculating properties: LogP decreased from 4.8 to 4.2, molecular weight increased slightly to 524.7. Tanimoto similarity is 0.85, within acceptable range. Structure approved for synthesis review.",
           timestamp: Date.now() + 2000,
         },
-        {
-          type: "agent_thought",
-          agent: "Synthesizer",
-          message: "Evaluating synthetic feasibility... The addition of a hydroxyl group at the tertiary carbon is synthetically challenging. Recommendation: Consider alternative positions or protecting group strategies. However, the route is feasible with 3-4 steps from the parent compound.",
-          timestamp: Date.now() + 4000,
-        },
-        {
-          type: "agent_thought",
-          agent: "Designer",
-          message: "Based on Synthesizer feedback, I propose an alternative: introducing a carboxylic acid group on the aromatic ring instead. This is synthetically more accessible. New proposal: `CC(C)(C(=O)O)c1ccc(cc1)C(O)CCCN2CCC(CC2)C(O)(c3ccc(C(=O)O)cc3)c4ccccc4`",
-          timestamp: Date.now() + 6000,
-        },
-        {
-          type: "agent_thought",
-          agent: "Validator",
-          message: "Validating revised structure... Excellent! LogP now 3.9, significantly improved. Molecular weight 568.7, still within range. Tanimoto similarity 0.82. All constraints satisfied. This is a strong candidate.",
-          timestamp: Date.now() + 8000,
-        },
-        {
-          type: "final_report",
-          data: {
-            // --- Propiedades que faltaban ---
-            status: "Success", // Añade un estado
-            history: [         // Añade un historial (puedes usar los 'thoughts')
-              "Analyzing the starting molecule...",
-              "Validating the proposed structure...",
-              "Evaluating synthetic feasibility...",
-              "Based on Synthesizer feedback, I propose an alternative...",
-              "Validating revised structure... This is a strong candidate."
-            ],
-            attempts: 2, // Añade un número de intentos
+        body: JSON.stringify(payload),
+      });
 
-            // --- Propiedades que ya tenías ---
-            final_smiles: "CC(C)(C(=O)O)c1ccc(cc1)C(O)CCCN2CCC(CC2)C(O)(c3ccc(C(=O)O)cc3)c4ccccc4",
-            
-            // --- Propiedad renombrada ---
-            validation: { // Renombrado de 'verifiable_data' a 'validation'
-              starting_molecule: {
-                smiles: params.smiles,
-                logP: 4.8,
-                molecular_weight: 501.7,
-              },
-              final_molecule: {
-                smiles: "CC(C)(C(=O)O)c1ccc(cc1)C(O)CCCN2CCC(CC2)C(O)(c3ccc(C(=O)O)cc3)c4ccccc4",
-                logP: 3.9,
-                molecular_weight: 568.7,
-              },
-              // ...el resto de tus datos de 'verifiable_data'
-            },
-            
-            // La propiedad 'executive_summary' debe ser eliminada
-            // porque el tipo no la espera.
-          },
-        },
-      ];
+      if (!response.ok || !response.body) {
+        throw new Error(
+          response.statusText || "Failed to connect to the server.",
+        );
+      }
 
-      for (let i = 0; i < mockMessages.length; i++) {
-        await new Promise(resolve => setTimeout(resolve, 2500));
-        setMessages(prev => [...prev, mockMessages[i]]);
-        if (i === mockMessages.length - 1) {
-          setIsRunning(false);
-          toast.success("Research complete!");
+      // 3. Manually read and decode the SSE stream
+      const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+      let buffer = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+
+        if (done) {
+          // Stream finished normally
+          break;
+        }
+
+        buffer += value;
+        const lines = buffer.split("\n\n");
+        buffer = lines.pop() || ""; // Keep the last, potentially incomplete, message
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) {
+            continue;
+          }
+
+          try {
+            const jsonData = line.substring(6); // Remove "data: "
+            const parsedData = JSON.parse(jsonData);
+
+            // 4. Handle different event types from the backend
+            if (parsedData.type === "agent_thought") {
+              const { agent, message } = parseAgentMessage(parsedData.message);
+              setMessages((prev) => [
+                ...prev,
+                {
+                  type: "agent_thought",
+                  agent: agent,
+                  message: message,
+                  timestamp: Date.now(),
+                  proposed_smiles: parsedData.proposed_smiles,
+                  validation_data: parsedData.validation_data,
+                } as StreamMessage,
+              ]);
+            } else if (parsedData.type === "final_report") {
+              setMessages((prev) => [
+                ...prev,
+                {
+                  type: "final_report",
+                  data: parsedData.data,
+                } as StreamMessage,
+              ]);
+            } else if (parsedData.type === "error") {
+              toast.error(`Stream error: ${parsedData.message}`);
+              reader.cancel(); // Stop the stream
+            } else if (parsedData.type === "stream_end") {
+              // Backend signals a clean finish
+              reader.cancel();
+              setIsRunning(false);
+              toast.success("Research complete!");
+            }
+          } catch (e) {
+            console.error("Failed to parse SSE message:", e);
+          }
         }
       }
 
