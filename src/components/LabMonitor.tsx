@@ -10,6 +10,7 @@ export interface AgentThought {
   message: string;
   timestamp?: number;
   proposed_smiles?: string;
+  validation_data?: Record<string, any>;
 }
 
 export interface FinalReportData {

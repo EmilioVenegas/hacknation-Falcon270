@@ -95,6 +95,7 @@ const Index = () => {
                   message: message,
                   timestamp: Date.now(),
                   proposed_smiles: parsedData.proposed_smiles,
+                  validation_data: parsedData.validation_data,
                 } as StreamMessage,
               ]);
             } else if (parsedData.type === "final_report") {

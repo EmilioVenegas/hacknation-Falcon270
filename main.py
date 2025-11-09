@@ -111,9 +111,11 @@ async def run_crew(request: CrewRequest):
                             "message": history[i],
                             "proposed_smiles": current_state.get("proposed_smiles", "")
                         }
+                        if last_node == "validate" and i == len(history) - 1:
+                            sse_data["validation_data"] = current_state.get("validation_results")
+
                         yield f"data: {json.dumps(sse_data)}\n\n"
                     last_history_index = len(history)
-
         except Exception as e:
             print(f"Error in stream: {e}")
             sse_data = {"type": "error", "message": str(e)}
