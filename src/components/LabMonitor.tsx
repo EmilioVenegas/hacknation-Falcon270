@@ -32,15 +32,15 @@ interface LabMonitorProps {
 }
 
 export const LabMonitor = ({ messages, isRunning }: LabMonitorProps) => {
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
   const finalReport = messages.find((m) => m.type === "final_report") as FinalReportData | undefined;
   const thoughts = messages.filter((m) => m.type === "agent_thought") as AgentThought[];
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
+    // We add a 'smooth' behavior to make it look nice.
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]); // This dependency is correct
 
   return (
     <Card className="h-full flex flex-col border-border shadow-medium">
@@ -59,7 +59,17 @@ export const LabMonitor = ({ messages, isRunning }: LabMonitorProps) => {
         </div>
       </div>
 
-      <ScrollArea className="flex-1 p-6" ref={scrollRef}>
+      {/* MODIFICATION: Added 'min-h-0'
+        In a flexbox column ('flex-col' on the Card), a 'flex-1' child (this 'ScrollArea')
+        is supposed to fill the remaining space. However, if its content is too large,
+        it can sometimes "overflow" and push the parent's boundaries instead of
+        scrolling internally.
+        
+        'min-h-0' tells the browser that this element's minimum height can be zero,
+        which resolves this conflict and forces the content to scroll within the
+        'flex-1' container as intended. This prevents the 'Card' from "growing down".
+      */}
+      <ScrollArea className="flex-1 p-6 min-h-0">
         {messages.length === 0 ? (
           <div className="h-full flex items-center justify-center text-center">
             <div className="space-y-2 max-w-md">
@@ -76,6 +86,7 @@ export const LabMonitor = ({ messages, isRunning }: LabMonitorProps) => {
             ))}
             
             {finalReport && <FinalReport report={finalReport.data} />}
+            <div ref={messagesEndRef} />
           </div>
         )}
       </ScrollArea>
