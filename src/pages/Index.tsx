@@ -37,8 +37,10 @@ const Index = () => {
         goal: params.goal,
         constraints: {
           similarity: params.similarity,
-          mwMin: params.mwMin,
-          mwMax: params.mwMax,
+          mwMin: params.isMwEnabled ? params.mwMin : 0, // 0 is unconstrained
+          mwMax: params.isMwEnabled ? params.mwMax : 9999, // 9999 is "unconstrained"
+          saScore: params.isSaScoreEnabled ? params.saScore : 10, // 10 is "unconstrained" (max score)
+          
         },
       };
 
@@ -151,7 +153,10 @@ const Index = () => {
       <main className="container mx-auto px-4 py-6">
         <div className="grid lg:grid-cols-2 gap-6 h-[calc(100vh-120px)]">
           <ControlPanel onRunCrew={handleRunCrew} isRunning={isRunning} />
-          <LabMonitor messages={messages} isRunning={isRunning} />
+          <div className="min-h-0 h-full flex-col ">
+            <LabMonitor messages={messages} isRunning={isRunning} />
+          </div>
+          
         </div>
       </main>
     </div>
