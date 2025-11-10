@@ -78,6 +78,58 @@ E -- Compiles Final Report --> F["End"]
 
 8.  ✅ **Final Report (Frontend):** When the backend stream sends a `final_report` event, the `Index.tsx` page adds this special message to the `messages` array. The `LabMonitor` detects this message and renders the `FinalReport` component, showing the final proposed molecule and a summary of the entire run.
 
+## Demo
+
+### 🖥️ UI
+The main user interface of the application, showing the different panels for input, visualization, and agent conversation.
+<img width="1681" height="1186" alt="image" src="https://github.com/user-attachments/assets/e58fc19b-2c6c-45bf-b549-4a3c8d2d4df8" />
+
+### 🧬 SMILES input and goal selection
+Users can input a molecule using its SMILES string and select the desired optimization goals from the control panel.
+<img width="755" height="1185" alt="image" src="https://github.com/user-attachments/assets/d450369a-b5e4-400b-9500-c6c35ee55012" />
+
+### 🛡️ Guardrails setup
+Define specific constraints or 'guardrails' for the molecule generation process to ensure results meet desired criteria.
+<img width="763" height="638" alt="image" src="https://github.com/user-attachments/assets/9bdac144-5659-4f43-9df5-2ee661dd18ae" />
+
+### 💬 Live agent conversation
+Follow the live conversation between the different AI agents as they work on the problem.
+
+### 🎨 Designer
+The Designer agent proposes a new molecule candidate based on the initial input and goals.
+<img height="400" alt="image" src="https://github.com/user-attachments/assets/c31250b1-3e1d-4103-b6d5-bd1a992ac6da" />
+
+### ✅ Validator response
+The Validator agent assesses the proposed molecule, checking its properties and adherence to the defined guardrails.
+<img height="755" height="1012" alt="image" src="https://github.com/user-attachments/assets/4488f0c1-8fef-4988-8f7a-be69219dfb8b" />
+
+### 🎯 Router goal checking and decision
+The Router agent checks if the validated molecule meets the optimization goals.
+
+### 🔄 Router rejection, starting second attempt
+Here, the Router rejects the candidate as it doesn't meet the goals, initiating a new design attempt.
+<img height="300" alt="image" src="https://github.com/user-attachments/assets/135710b8-1251-4daf-b134-92bc0badbdfc" />
+
+<img height="300" alt="image" src="https://github.com/user-attachments/assets/dc0054f5-8c8b-4838-bc61-c34fe14eae32" />
+
+### ⚗️ Synthetizer action
+The Synthetizer agent outlines the synthesis pathway for the proposed molecule.
+<img width="711" height="272" alt="image" src="https://github.com/user-attachments/assets/88c07493-770e-43f6-b2c7-79d8c4b0b91a" />
+
+### 📊 Final report
+A comprehensive final report is generated, detailing the new molecule, its properties, and the agent's findings.
+<img width="682" height="1266" alt="image" src="https://github.com/user-attachments/assets/94610579-ecbc-4df9-a241-747b87db8dea" />
+
+### ⚖️ Comparison table between original and proposed molecule
+A side-by-side comparison of the original molecule and the final proposed molecule, highlighting key property changes.
+<img width="657" height="430" alt="image" src="https://github.com/user-attachments/assets/1eb8cdcc-8974-4031-9500-7a575f3b5d6c" />
+
+
+
+
+
+
+
 ---
 
 ## ✨ Frontend Deep-Dive (`src/`)
